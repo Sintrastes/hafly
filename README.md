@@ -54,12 +54,12 @@ remindMe time timeToRemindAgain todo = schedule time {
 entryForm = Column {
     Row {
         Text "Name: "
-        nameEntry = TextEntry
+        nameEntry <- TextEntry
             .bind(name)
     }
     Row {
         Text "Age: "
-        ageEntry = TextEntry
+        ageEntry <- TextEntry
             .bind(age)
     }
 }
