@@ -37,7 +37,7 @@ type TypeError = String
 interpret :: InterpreterData -> Ast -> Either TypeError Dynamic
 interpret ctx@InterpreterData {..} = \case
     Atom x  -> maybe (Left "Could not find atom") Right $
-        lookup x exprDefs
+        lookup x (exprDefs <> fmap snd operatorDefs)
     App f' x' -> do
         f <- interpret ctx f'
         x <- interpret ctx x'
@@ -53,8 +53,8 @@ interpret ctx@InterpreterData {..} = \case
                     show argType
             Just resultType -> pure $ fromJust $
                 dynApply f x
-    Literal lit -> pure $ interpretLit lit
-    _       -> undefined
+    Literal lit  -> pure $ interpretLit lit
+    Sequence seq -> interpretSequence ctx seq
 
 interpretLit :: LiteralExpr -> Dynamic
 interpretLit = \case
@@ -64,13 +64,14 @@ interpretLit = \case
       (Record map) -> toDyn map
 
 interpretSequence :: InterpreterData -> SequenceAst -> Either TypeError Dynamic
-interpretSequence = undefined
+interpretSequence ctx@InterpreterData {..} = undefined
 
 exampleContext = InterpreterData {
     exprDefs = fromList
         [
           ("printLn", toDyn putStrLn)
         , ("readLn", toDyn getLine)
+        , ("toString", toDyn (show :: Int -> String))
         ]
   , operatorDefs = fromList 
         [
@@ -84,6 +85,13 @@ exampleContext = InterpreterData {
 exampleAst = App (Atom "printLn")
     (Literal $ StringLit "Hello, world!")
 
+exampleArithmetic = App (Atom "printLn") $ 
+    App (Atom "toString") $
+        App (App (Atom "+") 
+            (Literal $ IntLit 2))
+            (Literal $ IntLit 2)
+
+-- | Interpret a Hafly expression in the IO monad.
 interpretIO :: InterpreterData -> Ast -> IO ()
 interpretIO ctx ast = do
     let result = interpret ctx ast
@@ -97,5 +105,5 @@ interpretIO ctx ast = do
 main :: IO ()
 main = interpretIO
     exampleContext
-    exampleAst
+    exampleArithmetic
 
