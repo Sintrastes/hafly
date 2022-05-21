@@ -22,11 +22,13 @@ Given sufficent time (and/or interested contributors!) I'll probably add optiona
 # Features
 
  * Syntax: What if Haskell... but with a bit of Kotlin thrown in for good measure?
+ * Kotlin-esque string templating.
  * Sequential blocks that can be bound to any monad.
  * Flexible binding of names in sequential blocks (do notation++)™.
  * Simple pattern matching.
  * Flexible records -- because we're not cavemen.
  * Record dot and universal function call syntax.
+ * Strictly evaluated.
 
 
 # Examples
@@ -64,3 +66,12 @@ entryForm = Column {
     }
 }
 ```
+
+How does it work?
+-----------------
+
+To set up your own embedded interpreter, you need to build an `InterpreterContext` -- which contains all the data (such as "built-in" functions and operators) needed to interpret a hafly program. Hafly comes with an optional `base :: InterpreterContext` "standard library" of sorts that you can use to get started -- but this can be customized to your own needs.
+
+Once you have that, with `interpret :: InterpreterContext -> Ast -> Either TypeError Dynamic` you can take a hafly `Ast` and interpret it as a `Dynamic` value from `Data.Dynamic`. You can then attempt to grab a value of some concrete Haskell type out of that `Dynamic` with `Data.Dynamic`'s `fromDynamic`.
+
+Hafly comes with a few built-in functions for interpreting hafly programs in specific contexts. For instance, `interpretIO` can be used to interpret a hafly program representing an IO action.
