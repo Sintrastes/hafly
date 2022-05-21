@@ -10,8 +10,28 @@ import Data.Maybe
 import Type.Reflection (SomeTypeRep(..))
 
 data InterpreterData = InterpreterData {
-    exprDefs  :: Map String Dynamic,
-    operatorDefs :: Map String (Int, Dynamic)
+    exprDefs     :: Map String Dynamic,
+    operatorDefs :: Map String (Int, Dynamic),
+    monadDefs    :: [DynamicMonad] 
+}
+
+data DynamicMonad = DynamicMonad {
+    -- | The bind operation of the monad applied to dynamic types.
+    dynBind   :: (Dynamic -> Dynamic) -> Dynamic -> Either TypeError Dynamic,
+    -- | The return operation of the monad applied to dynamic types.
+    dynReturn :: Dynamic -> Dynamic,
+    -- | Helper function to check to see if an expression is in
+    --    this monad.
+    isOfType  :: TypeRep -> Bool 
+}
+
+-- | Build up a DynamicMonad from a monad.
+fromMonad :: forall m. (Monad m, Typeable m) => Proxy m -> DynamicMonad
+fromMonad _ = DynamicMonad {
+    dynReturn = \x -> case x of
+        Dynamic _ (v :: a) -> toDyn ((return @m) x),
+    dynBind = \f x -> undefined,
+    isOfType = undefined
 }
 
 addDef :: InterpreterData -> String -> Dynamic -> InterpreterData
@@ -69,7 +89,19 @@ interpretLit = \case
       (Record map) -> toDyn map
 
 interpretSequence :: InterpreterData -> SequenceAst -> Either TypeError Dynamic
-interpretSequence ctx@InterpreterData {..} = undefined
+interpretSequence ctx@InterpreterData {..} = \case
+    SequenceAst [] -> Left "Cannot interpret an empty sequence"
+    SequenceAst (x:xs) -> do
+        m <- tryInferMonad ctx x
+        interpretMonadicSequence ctx m (x:xs)
+
+tryInferMonad :: InterpreterData -> SequenceExpr -> Either TypeError DynamicMonad
+tryInferMonad = undefined
+
+interpretMonadicSequence :: InterpreterData -> DynamicMonad -> [SequenceExpr] -> Either TypeError Dynamic
+interpretMonadicSequence ctx@InterpreterData {..} m@DynamicMonad {..} = \case
+    []     -> undefined
+    (x:xs) -> undefined
 
 exampleContext = InterpreterData {
     exprDefs = fromList
@@ -85,6 +117,7 @@ exampleContext = InterpreterData {
         , ("-", (1, toDyn ((+) :: Int -> Int -> Int)))
         , ("/", (1, toDyn ((+) :: Int -> Int -> Int)))
         ]
+  , monadDefs = [fromMonad $ Proxy @IO]
 }
 
 exampleAst = App (Atom "printLn")

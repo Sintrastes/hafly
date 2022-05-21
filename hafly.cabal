@@ -34,6 +34,7 @@ executable hafly
         LambdaCase
       , TypeApplications
       , RecordWildCards
+      , ScopedTypeVariables
     build-depends:    base ^>=4.14.3.0
                     , hashmap
     hs-source-dirs:   app
