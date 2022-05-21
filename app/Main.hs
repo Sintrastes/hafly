@@ -96,6 +96,12 @@ exampleArithmetic = App (Atom "printLn") $
             (Literal $ IntLit 2))
             (Literal $ IntLit 2)
 
+exampleSimpleSeq = Sequence $  SequenceAst
+    [
+      Expr $ App (Atom "printLn") (Literal $ StringLit "Hello... (wait for it)")
+    , Expr $ App (Atom "printLn") (Literal $ StringLit "World!")
+    ]
+
 -- | Interpret a Hafly expression in the IO monad.
 interpretIO :: InterpreterData -> Ast -> IO ()
 interpretIO ctx ast = do
@@ -110,5 +116,6 @@ interpretIO ctx ast = do
 main :: IO ()
 main = interpretIO
     exampleContext
-    exampleArithmetic
+    exampleSimpleSeq
+
 
