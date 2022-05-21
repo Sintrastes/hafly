@@ -14,6 +14,11 @@ data InterpreterData = InterpreterData {
     operatorDefs :: Map String (Int, Dynamic)
 }
 
+addDef :: InterpreterData -> String -> Dynamic -> InterpreterData
+addDef ctx name def = ctx { 
+    exprDefs = exprDefs ctx <> singleton name def 
+}
+
 data Ast =
     Atom String
   | Literal LiteralExpr
