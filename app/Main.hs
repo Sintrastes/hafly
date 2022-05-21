@@ -12,7 +12,7 @@ import Type.Reflection (SomeTypeRep(..))
 data InterpreterData = InterpreterData {
     exprDefs     :: Map String Dynamic,
     operatorDefs :: Map String (Int, Dynamic),
-    monadDefs    :: [DynamicMonad] 
+    monadDefs    :: [DynamicMonad]
 }
 
 data DynamicMonad = DynamicMonad {
@@ -22,7 +22,7 @@ data DynamicMonad = DynamicMonad {
     dynReturn :: Dynamic -> Dynamic,
     -- | Helper function to check to see if an expression is in
     --    this monad.
-    isOfType  :: TypeRep -> Bool 
+    isOfType  :: TypeRep -> Bool
 }
 
 -- | Build up a DynamicMonad from a monad.
@@ -35,8 +35,8 @@ fromMonad _ = DynamicMonad {
 }
 
 addDef :: InterpreterData -> String -> Dynamic -> InterpreterData
-addDef ctx name def = ctx { 
-    exprDefs = exprDefs ctx <> singleton name def 
+addDef ctx name def = ctx {
+    exprDefs = exprDefs ctx <> singleton name def
 }
 
 data Ast =
@@ -110,12 +110,12 @@ exampleContext = InterpreterData {
         , ("readLn", toDyn getLine)
         , ("toString", toDyn (show :: Int -> String))
         ]
-  , operatorDefs = fromList 
+  , operatorDefs = fromList
         [
           ("+", (1, toDyn ((+) :: Int -> Int -> Int)))
-        , ("*", (1, toDyn ((+) :: Int -> Int -> Int)))
-        , ("-", (1, toDyn ((+) :: Int -> Int -> Int)))
-        , ("/", (1, toDyn ((+) :: Int -> Int -> Int)))
+        , ("*", (1, toDyn ((*) :: Int -> Int -> Int)))
+        , ("-", (1, toDyn ((-) :: Int -> Int -> Int)))
+        , ("/", (1, toDyn (div :: Int -> Int -> Int)))
         ]
   , monadDefs = [fromMonad $ Proxy @IO]
 }
@@ -123,9 +123,9 @@ exampleContext = InterpreterData {
 exampleAst = App (Atom "printLn")
     (Literal $ StringLit "Hello, world!")
 
-exampleArithmetic = App (Atom "printLn") $ 
+exampleArithmetic = App (Atom "printLn") $
     App (Atom "toString") $
-        App (App (Atom "+") 
+        App (App (Atom "+")
             (Literal $ IntLit 2))
             (Literal $ IntLit 2)
 
