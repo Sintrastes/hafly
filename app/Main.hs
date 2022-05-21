@@ -10,7 +10,8 @@ import Data.Maybe
 import Type.Reflection (SomeTypeRep(..))
 
 data InterpreterData = InterpreterData {
-    exprDefs :: Map String Dynamic
+    exprDefs  :: Map String Dynamic,
+    operatorDefs :: Map String (Int, Dynamic)
 }
 
 data Ast =
@@ -19,7 +20,7 @@ data Ast =
   | App Ast Ast
   | Sequence SequenceAst
 
-data LiteralExpr = 
+data LiteralExpr =
     IntLit Int
   | DoubleLit Double
   | StringLit String
@@ -27,30 +28,30 @@ data LiteralExpr =
 
 data SequenceAst = SequenceAst [SequenceExpr]
 
-data SequenceExpr = 
+data SequenceExpr =
       Expr Ast
     | BindExpr String Ast
 
 type TypeError = String
 
 interpret :: InterpreterData -> Ast -> Either TypeError Dynamic
-interpret ctx@(InterpreterData exprDefs) = \case
-    Atom x  -> maybe (Left "Could not find atom") Right $ 
+interpret ctx@InterpreterData {..} = \case
+    Atom x  -> maybe (Left "Could not find atom") Right $
         lookup x exprDefs
     App f' x' -> do
         f <- interpret ctx f'
         x <- interpret ctx x'
 
-        let argType = case x of 
+        let argType = case x of
                 Dynamic z _ -> SomeTypeRep z
-        let functionType = case f of 
+        let functionType = case f of
                 Dynamic z _ -> SomeTypeRep z
-        
+
         case funResultTy functionType argType of
-            Nothing -> Left $ "Cannot apply function of type " ++ 
+            Nothing -> Left $ "Cannot apply function of type " ++
                 show functionType ++ " to argument of type " ++
                     show argType
-            Just resultType -> pure $ fromJust $ 
+            Just resultType -> pure $ fromJust $
                 dynApply f x
     Literal lit -> pure $ interpretLit lit
     _       -> undefined
@@ -62,20 +63,25 @@ interpretLit = \case
       (StringLit s) -> toDyn s
       (Record map) -> toDyn map
 
-
 interpretSequence :: InterpreterData -> SequenceAst -> Either TypeError Dynamic
 interpretSequence = undefined
 
 exampleContext = InterpreterData {
-    exprDefs = fromList 
+    exprDefs = fromList
         [
           ("printLn", toDyn putStrLn)
-        , ("+", toDyn ((+) :: Int -> Int -> Int))
         , ("readLn", toDyn getLine)
+        ]
+  , operatorDefs = fromList 
+        [
+          ("+", (1, toDyn ((+) :: Int -> Int -> Int)))
+        , ("*", (1, toDyn ((+) :: Int -> Int -> Int)))
+        , ("-", (1, toDyn ((+) :: Int -> Int -> Int)))
+        , ("/", (1, toDyn ((+) :: Int -> Int -> Int)))
         ]
 }
 
-exampleAst = App (Atom "printLn") 
+exampleAst = App (Atom "printLn")
     (Literal $ StringLit "Hello, world!")
 
 interpretIO :: InterpreterData -> Ast -> IO ()
@@ -83,13 +89,13 @@ interpretIO ctx ast = do
     let result = interpret ctx ast
     case result of
         Left err -> putStrLn err
-        Right x -> 
+        Right x ->
             case fromDynamic @(IO ()) x of
                 Nothing -> putStrLn "Error: Expression was not of type IO ()"
                 Just action -> action
 
 main :: IO ()
-main = interpretIO 
-    exampleContext 
+main = interpretIO
+    exampleContext
     exampleAst
-    
+
