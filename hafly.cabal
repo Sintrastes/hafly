@@ -41,6 +41,8 @@ library hafly-lib
       , RecordWildCards
       , ScopedTypeVariables
       , OverloadedStrings
+      , ExistentialQuantification
+      , KindSignatures
 
 executable hafly
     main-is:          app/Main.hs
