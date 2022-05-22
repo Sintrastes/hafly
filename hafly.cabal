@@ -37,9 +37,11 @@ executable hafly
       , TypeApplications
       , RecordWildCards
       , ScopedTypeVariables
+      , OverloadedStrings
     build-depends:    base ^>=4.14.3.0
                     , hashmap
                     , text
                     , megaparsec
+                    , parser-combinators
     hs-source-dirs:   app
     default-language: Haskell2010
