@@ -9,6 +9,7 @@ import Data.Void
 import qualified Data.Text as T
 import Text.Megaparsec.Char
 import Control.Monad.Combinators.Expr
+import Data.HashMap (fromList)
 
 type Parser = Parsec Void T.Text
 
@@ -39,11 +40,21 @@ bindToken = token (string "<-")
 
 semicolon = token (char ';')
 
+equals = token (char '=')
+
 identifier = token (some alphaNumChar)
 
 -- Parser for an entire hafly program.
 program :: Parser Program
-program = undefined
+program = Program . fromList <$> 
+    sepBy exprDef (token newline)
+
+exprDef :: Parser (String, Ast)
+exprDef = do
+    x <- identifier
+    equals
+    y <- expr
+    return (x, y)
 
 -- | Parse an arbitrary hafly expression.
 expr :: Parser Ast
