@@ -38,6 +38,10 @@ rightBracket = token (char '}')
 
 bindToken = token (string "<-")
 
+arrToken = token (string "->")
+
+lambdaToken = token (char '\\')
+
 semicolon = token (char ';')
 
 equals = token (char '=')
@@ -63,8 +67,17 @@ expr = try app
 
 baseExpr :: Parser Ast
 baseExpr = try (Literal <$> literal)
+    <|> try lambdaExpr
     <|> try (Atom <$> identifier)
     <|> (Sequence <$> block)
+
+lambdaExpr :: Parser Ast
+lambdaExpr = do
+    lambdaToken
+    vars <- sepBy identifier (token $ char ' ')
+    arrToken
+    body <- expr
+    return $ Lambda vars body
 
 -- Parse a literal expression
 literal :: Parser LiteralExpr
