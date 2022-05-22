@@ -10,6 +10,10 @@ import Data.Maybe
 import Type.Reflection (SomeTypeRep(..))
 import Language.Hafly.Interpreter
 import Language.Hafly.Ast
+import System.Console.Haskeline
+import Control.Monad.IO.Class
+import qualified Data.Text as T
+import Language.Hafly.Parser
 
 exampleContext = InterpreterData {
     exprDefs = fromList
@@ -45,8 +49,19 @@ exampleSimpleSeq = Sequence $  SequenceAst
     ]
 
 main :: IO ()
-main = interpretIO
-    exampleContext
-    exampleSimpleSeq
-
+main = runInputT defaultSettings repl
+  where
+    repl :: InputT IO ()
+    repl = do
+        minput <- getInputLine "> "
+        case minput of
+            Nothing -> return ()
+            Just input -> do 
+                case parseExpression (T.pack input) of
+                    Left err -> do
+                        liftIO $ putStrLn "Error parsing input."
+                        repl
+                    Right exp -> do
+                        liftIO $ interpretIO exampleContext exp
+                        repl
 
