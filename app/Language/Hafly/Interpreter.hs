@@ -18,7 +18,7 @@ data InterpreterData = InterpreterData {
 
 data DynamicMonad = DynamicMonad {
     -- | The bind operation of the monad applied to dynamic types.
-    dynBind   :: (Dynamic -> Dynamic) -> Dynamic -> Either TypeError Dynamic,
+    dynBind   :: Dynamic -> Dynamic -> Either TypeError Dynamic,
     -- | The return operation of the monad applied to dynamic types.
     dynReturn :: Dynamic -> Dynamic,
     -- | Helper function to check to see if an expression is in
@@ -37,10 +37,7 @@ fromMonad :: forall m. (Monad m, Typeable m) => Proxy m -> DynamicMonad
 fromMonad _ = DynamicMonad {
     dynReturn = \x -> case x of
         Dynamic _ (v :: a) -> toDyn ((return @m) x),
-    dynBind = \x f -> 
-        -- Need to somehow check that f is a monadic function of the right type,
-        -- and x is a monadic value of the right type.
-        undefined,
+    dynBind = \x f -> maybe (Left "") Right $ dynApply f x,
     isOfType = \x -> typeRepTyCon x == typeRepTyCon (typeRep (Proxy :: Proxy (m ())))
 }
 
@@ -90,7 +87,7 @@ tryInferMonad = undefined
 
 interpretMonadicSequence :: InterpreterData -> DynamicMonad -> [SequenceExpr] -> Either TypeError Dynamic
 interpretMonadicSequence ctx@InterpreterData {..} m@DynamicMonad {..} = \case
-    []     -> Left "Cannot interoret an empty sequence"
+    []     -> Left "Cannot interpret an empty sequence"
     ((Expr x):xs) -> do
         x' <- interpret ctx x
         rest <- interpretMonadicSequence ctx m xs
