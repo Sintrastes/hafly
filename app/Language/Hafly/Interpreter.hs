@@ -22,15 +22,21 @@ import Control.Arrow
 data InterpreterData = InterpreterData {
     exprDefs     :: Map String Dynamic,
     operatorDefs :: Map String (Int, Dynamic),
-    monadDefs    :: [DynamicMonad]
+    monadDefs    :: [SomeDynamicMonad]
 }
 
-data DynamicM = forall a m. (Monad m) => DynamicM (TypeRep a) (TypeRep m) (m a)
+data DynamicM = forall a m. (Monad m, Typeable m) => DynamicM (TypeRep a) (TypeRep m) (m a)
 
-data DynamicMFor m = forall a. (Monad m) => DynamicMFor (TypeRep a) (m a)
+data DynamicMFor m = forall a. (Monad m, Typeable m) => DynamicMFor (TypeRep a) (m a)
 
 toDynamicM :: forall m. (Monad m, Typeable m) => DynamicMFor m -> DynamicM
 toDynamicM (DynamicMFor tr ma) = DynamicM tr (typeRep @m) ma
+
+toDynM :: forall m. (Monad m, Typeable m) => Dynamic -> Maybe (m Dynamic)
+toDynM (Dynamic xRep x) = do
+  App gRep yRep <- pure xRep
+  HRefl <- eqTypeRep gRep (typeRep @m)
+  pure (Dynamic yRep <$> x)
 
 checkM :: forall m. (Monad m, Typeable m) => Dynamic -> Maybe (DynamicMFor m)
 checkM (Dynamic xRep x) = do
@@ -38,61 +44,28 @@ checkM (Dynamic xRep x) = do
   HRefl <- eqTypeRep gRep (typeRep @m)
   pure (DynamicMFor yRep x)
 
-{-
-checkM :: forall m. Dynamic -> Maybe (DynamicMFor m)
-checkM = \case
-    Dynamic trMA a -> innerType (SomeTypeRep trMA) >>= \(SomeTypeRep (trA :: TypeRep @Type a)) ->
-        pure $ DynamicMFor trA a
-  where
-    mConstr = typeRepTyCon (typeRep @(m ()))
-
-innerType :: SomeTypeRep -> Maybe SomeTypeRep
-innerType (SomeTypeRep x) = do
-    let (con, args) = splitApps x
-    if length args == 1
-        then pure $ head args
-        else Nothing
--}
-
 asDyn :: DynamicM -> Dynamic
 asDyn (DynamicM trA trM ma) = Dynamic (mkTrApp trM trA) ma
 
-data DynamicMonad = DynamicMonad {
+data DynamicMonad m = DynamicMonad {
     -- | The bind operation of the monad applied to dynamic types.
-    dynBind   :: DynamicM -> Dynamic -> Either TypeError DynamicM,
+    dynBind   :: m Dynamic -> (Dynamic -> m Dynamic) -> m Dynamic,
     -- | The return operation of the monad applied to dynamic types.
-    dynReturn :: Dynamic -> DynamicM,
-    -- | Helper function to check to see if an expression is in
-    --    this monad.
-    toDynM  :: Dynamic -> Either TypeError DynamicM
+    dynReturn :: Dynamic -> m Dynamic
 }
+
+data SomeDynamicMonad = forall m. (Monad m, Typeable m) => SomeDynamicMonad (DynamicMonad m)
 
 -- Equivalent to >>
-dynSeq :: DynamicMonad -> DynamicM -> DynamicM -> Either TypeError DynamicM
-dynSeq m x y = dynBind m x (dynApp (toDyn $ const @DynamicM @Dynamic) (toDyn y))
+dynSeq :: DynamicMonad m -> m Dynamic -> m Dynamic -> m Dynamic
+dynSeq m x y = dynBind m x (const y)
 
 -- | Build up a DynamicMonad from a monad.
-fromMonad :: forall m. (Monad m, Typeable m) => Proxy m -> DynamicMonad
-fromMonad _ = DynamicMonad {
-    dynReturn = \(Dynamic trA (v :: a)) ->
-        DynamicM trA (typeRep @m) (return @m v),
-    dynBind = \x f -> case x of
-        (DynamicM trA trM1 (ma :: m1 a)) -> case testEquality (typeRep @m) trM1 of
-            Nothing -> Left "Different types of monads used."
-            Just Refl ->
-              let res = do
-                      let res1 = dynApp (toDyn (bindDyn @m @Dynamic @Dynamic))
-                                (toDyn $ Dynamic trA <$> ma)
-                      pure $ dynApp res1 f
-              in case res of
-                Nothing -> Left "Could not apply bind."
-                Just dy -> toDynM dy,
-    toDynM = toDynM
+fromMonad :: forall m. (Monad m, Typeable m) => Proxy m -> SomeDynamicMonad
+fromMonad _ = SomeDynamicMonad $ DynamicMonad {
+    dynReturn = return,
+    dynBind = (>>=) @m @Dynamic @Dynamic
 }
-    where
-      toDynM :: Dynamic -> Either TypeError DynamicM
-      toDynM x = maybe (Left "Type error") Right $
-             toDynamicM @m <$> checkM x
 
 extractM :: DynamicMFor m -> m Dynamic
 extractM (DynamicMFor pA ma) = Dynamic pA <$> ma
@@ -140,32 +113,32 @@ interpretSequence :: InterpreterData -> SequenceAst -> Either TypeError Dynamic
 interpretSequence ctx@InterpreterData {..} = \case
     SequenceAst [] -> Left "Cannot interpret an empty sequence"
     SequenceAst (x:xs) -> do
-        m <- tryInferMonad ctx x
-        asDyn <$> interpretMonadicSequence ctx m (x:xs)
+        SomeDynamicMonad m <- tryInferMonad ctx x
+        toDyn <$> interpretMonadicSequence ctx m (x:xs)
 
-tryInferMonad :: InterpreterData -> SequenceExpr -> Either TypeError DynamicMonad
+tryInferMonad :: InterpreterData -> SequenceExpr -> Either TypeError SomeDynamicMonad
 tryInferMonad ctx@InterpreterData {..} = \case
   Expr ast -> do
       res <- interpret ctx ast
-      defs <- sequence <$> forM monadDefs (\def ->
-          case toDynM def res of
-              Left s -> pure Nothing
-              Right dm -> pure $ Just def)
+      defs <- sequence <$> forM monadDefs (\def@(SomeDynamicMonad (mnd :: DynamicMonad m)) ->
+          case checkM @m res of
+              Nothing -> pure Nothing
+              Just dm -> pure $ Just def)
       case defs of
           Nothing  -> Left "Could not find matching monad."
           Just dms -> return $ head dms
 
   BindExpr s ast -> tryInferMonad ctx (Expr ast)
 
-interpretMonadicSequence :: InterpreterData -> DynamicMonad -> [SequenceExpr] -> Either TypeError DynamicM
+interpretMonadicSequence :: (Typeable m, Monad m) => InterpreterData -> DynamicMonad m -> [SequenceExpr] -> Either TypeError (m Dynamic)
 interpretMonadicSequence ctx@InterpreterData {..} m@DynamicMonad {..} = \case
     -- TODO: This probably won't work for monadic sequences returning a value.
     []     -> pure $ dynReturn (toDyn ())
     ((Expr x):xs) -> do
         x' <- interpret ctx x
         rest <- interpretMonadicSequence ctx m xs
-        mx <- toDynM x'
-        dynSeq m mx rest
+        mx <- maybe (Left "Expression was not of the correct monadic type") Right $ toDynM x'
+        pure $ dynSeq m mx rest
     ((BindExpr x y):xs) -> undefined
 
 -- | Interpret a Hafly expression in the IO monad.
@@ -175,6 +148,6 @@ interpretIO ctx ast = do
     case result of
         Left err -> putStrLn err
         Right x ->
-            case fromDynamic @(IO ()) x of
+            case fromDynamic @(IO Dynamic) x of
                 Nothing -> putStrLn "Error: Expression was not of type IO ()"
-                Just action -> action
+                Just action -> action >> pure ()
