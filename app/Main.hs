@@ -37,6 +37,7 @@ exampleArithmetic = App (Atom "printLn") $
             (Literal $ IntLit 2))
             (Literal $ IntLit 2)
 
+exampleSimpleSeq :: Ast
 exampleSimpleSeq = Sequence $  SequenceAst
     [
       Expr $ App (Atom "printLn") (Literal $ StringLit "Hello... (wait for it)")
