@@ -18,6 +18,7 @@ import Unsafe.Coerce (unsafeCoerce)
 import Data.Kind (Type)
 import Control.Monad
 import Control.Arrow
+import Data.List.NonEmpty (NonEmpty ((:|)))
 
 data InterpreterData = InterpreterData {
     exprDefs     :: Map String Dynamic,
@@ -99,8 +100,22 @@ interpret ctx@InterpreterData {..} = \case
                 dynApply f x
     Literal lit  -> pure $ interpretLit lit
     Sequence seq -> interpretSequence ctx seq
-    Lambda vars exp -> undefined
+    Lambda vars exp -> interpretLambda ctx vars exp
     Var x        -> Left $ "Found unbound variable: " ++ show x
+
+interpretLambda :: InterpreterData -> [String] -> Ast -> Either TypeError Dynamic
+interpretLambda ctx@InterpreterData {..} [] body =
+    pure $ toDyn $ interpret ctx body
+interpretLambda ctx@InterpreterData {..} (x:xs) body =
+    interpretMultiArgLambda ctx body (x :| xs)
+
+interpretMultiArgLambda :: InterpreterData -> Ast -> NonEmpty String -> Either TypeError Dynamic
+interpretMultiArgLambda ctx@InterpreterData {..} body = \case
+    (v :| []) ->
+        pure $ toDyn $ \x -> subst v x body
+    (v :| v' : vs) ->
+        pure $ toDyn $ \x -> interpretMultiArgLambda ctx 
+            (subst v x body) (v' :| vs)
 
 interpretLit :: LiteralExpr -> Dynamic
 interpretLit = \case
