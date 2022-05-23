@@ -105,17 +105,21 @@ interpret ctx@InterpreterData {..} = \case
 
 interpretLambda :: InterpreterData -> [String] -> Ast -> Either TypeError Dynamic
 interpretLambda ctx@InterpreterData {..} [] body =
-    pure $ toDyn $ interpret ctx body
+    pure $ toDyn $ fromRight $ interpret ctx body
 interpretLambda ctx@InterpreterData {..} (x:xs) body =
     interpretMultiArgLambda ctx body (x :| xs)
 
 interpretMultiArgLambda :: InterpreterData -> Ast -> NonEmpty String -> Either TypeError Dynamic
 interpretMultiArgLambda ctx@InterpreterData {..} body = \case
     (v :| []) ->
-        pure $ toDyn $ \x -> subst v x body
+        pure $ toDyn $ \x -> fromRight $ interpret ctx $ subst v x body
     (v :| v' : vs) ->
-        pure $ toDyn $ \x -> interpretMultiArgLambda ctx 
+        pure $ toDyn $ \x -> fromRight $ interpretMultiArgLambda ctx 
             (subst v x body) (v' :| vs)
+
+-- TODO: Just a workaround for now to defer
+-- evaluation inside of lambdas
+fromRight (Right x) = x
 
 interpretLit :: LiteralExpr -> Dynamic
 interpretLit = \case

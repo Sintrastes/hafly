@@ -74,7 +74,7 @@ baseExpr = try (Literal <$> literal)
 lambdaExpr :: Parser Ast
 lambdaExpr = do
     lambdaToken
-    vars <- sepBy identifier (token $ char ' ')
+    vars <- sepBy identifier whitespace
     arrToken
     body <- expr
     return $ Lambda vars body
