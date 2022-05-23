@@ -4,6 +4,7 @@
 module Language.Hafly.Ast where
 import Data.HashMap
 import Data.Bits (Bits(xor))
+import Data.Dynamic
 
 newtype Program = Program (Map String Ast)
 
@@ -14,6 +15,7 @@ data Ast =
   | Lambda [String] Ast
   | Sequence SequenceAst
   | Var String 
+  | Const Dynamic
         deriving(Show)
 
 subst :: String -> Ast -> Ast -> Ast

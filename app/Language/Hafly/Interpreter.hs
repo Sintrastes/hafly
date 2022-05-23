@@ -83,6 +83,7 @@ interpret :: InterpreterData -> Ast -> Either TypeError Dynamic
 interpret ctx@InterpreterData {..} = \case
     Atom x  -> maybe (Left "Could not find atom") Right $
         lookup x (exprDefs <> fmap snd operatorDefs)
+    Const x -> pure x
     Ast.App f' x' -> do
         f <- interpret ctx f'
         x <- interpret ctx x'
@@ -96,8 +97,8 @@ interpret ctx@InterpreterData {..} = \case
             Nothing -> Left $ "Cannot apply function of type " ++
                 show functionType ++ " to argument of type " ++
                     show argType
-            Just resultType -> pure $ fromJust $
-                dynApply f x
+            Just resultType -> pure $ flattenDyn $
+                fromJust $ dynApply f x
     Literal lit  -> pure $ interpretLit lit
     Sequence seq -> interpretSequence ctx seq
     Lambda vars exp -> interpretLambda ctx vars exp
@@ -112,10 +113,10 @@ interpretLambda ctx@InterpreterData {..} (x:xs) body =
 interpretMultiArgLambda :: InterpreterData -> Ast -> NonEmpty String -> Either TypeError Dynamic
 interpretMultiArgLambda ctx@InterpreterData {..} body = \case
     (v :| []) ->
-        pure $ toDyn $ \x -> fromRight $ interpret ctx $ subst v x body
+        pure $ toDyn $ \x -> fromRight $ interpret ctx $ subst v (Const x) body
     (v :| v' : vs) ->
         pure $ toDyn $ \x -> fromRight $ interpretMultiArgLambda ctx 
-            (subst v x body) (v' :| vs)
+            (subst v (Const x) body) (v' :| vs)
 
 -- TODO: Just a workaround for now to defer
 -- evaluation inside of lambdas
@@ -168,5 +169,15 @@ interpretIO ctx ast = do
         Left err -> putStrLn err
         Right x ->
             case fromDynamic @(IO Dynamic) x of
-                Nothing -> putStrLn "Error: Expression was not of type IO ()"
+                Nothing -> case fromDynamic @(IO ()) x of
+                    Nothing -> putStrLn $ "Error: Expression was not of type IO (). (Was " ++ 
+                        show (dynTypeRep x) ++ ")"
+                    Just action -> action
                 Just action -> action >> pure ()
+
+-- | Helper function to flatten nested dynamics
+-- into a single Dynamic.
+flattenDyn :: Dynamic -> Dynamic
+flattenDyn dyn@(Dynamic tr x) = case testEquality tr (typeRep @Dynamic) of
+  Nothing -> dyn
+  Just Refl -> flattenDyn x
