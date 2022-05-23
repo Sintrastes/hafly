@@ -36,6 +36,10 @@ leftBracket = token (char '{')
 
 rightBracket = token (char '}')
 
+leftParen = token (char '(')
+
+rightParen = token (char ')')
+
 bindToken = token (string "<-")
 
 arrToken = token (string "->")
@@ -47,6 +51,12 @@ semicolon = token (char ';')
 equals = token (char '=')
 
 identifier = token (some alphaNumChar)
+
+inParens p = do
+    leftParen
+    res <- p
+    rightParen
+    pure res
 
 -- Parser for an entire hafly program.
 program :: Parser Program
