@@ -125,7 +125,7 @@ bindExpr = do
 -- Parse a function application.
 app :: Parser Ast
 app = foldl1 App <$>
-    some (try (inParens baseExpr) <|> baseExpr)
+    some (try baseExpr <|> inParens expr)
 
 -- Parse an expression with operators.
 opExpr :: Parser Ast
