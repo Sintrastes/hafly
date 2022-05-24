@@ -51,6 +51,7 @@ executable hafly
                     , hashmap
                     , text
                     , haskeline
+                    , parser-combinators
     default-extensions:
         LambdaCase
       , TypeApplications

@@ -9,11 +9,13 @@ import Control.Concurrent (yield)
 import Data.Maybe
 import Type.Reflection (SomeTypeRep(..))
 import Language.Hafly.Interpreter
-import Language.Hafly.Ast
+import Language.Hafly.Ast hiding (Const)
 import System.Console.Haskeline
 import Control.Monad.IO.Class
 import qualified Data.Text as T
-import Language.Hafly.Parser
+import Language.Hafly.Parser ( parseExpression )
+import Control.Monad.Combinators.Expr
+import Control.Applicative
 
 exampleContext = InterpreterData {
     exprDefs = fromList
@@ -22,12 +24,14 @@ exampleContext = InterpreterData {
         , ("readLn", toDyn getLine)
         , ("toString", toDyn (show :: Int -> String))
         ]
-  , operatorDefs = fromList
+  , operatorDefs = 
         [
-          ("+", (1, toDyn ((+) :: Int -> Int -> Int)))
-        , ("*", (1, toDyn ((*) :: Int -> Int -> Int)))
-        , ("-", (1, toDyn ((-) :: Int -> Int -> Int)))
-        , ("/", (1, toDyn (div :: Int -> Int -> Int)))
+          [
+            InfixR $ Const ("+", toDyn ((+) :: Int -> Int -> Int))
+          , InfixR $ Const ("*", toDyn ((*) :: Int -> Int -> Int))
+          , InfixR $ Const ("-", toDyn ((-) :: Int -> Int -> Int))
+          , InfixR $ Const ("/", toDyn (div :: Int -> Int -> Int))
+          ]
         ]
   , monadDefs = [fromMonad $ Proxy @IO]
 }

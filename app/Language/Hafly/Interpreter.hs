@@ -3,13 +3,12 @@
 module Language.Hafly.Interpreter where
 import Data.Dynamic
 import Data.Data (Proxy)
-import Language.Hafly.Ast hiding (App)
+import Language.Hafly.Ast hiding (App, Const)
 import Type.Reflection hiding (App)
 import Data.HashMap hiding (filter)
 import Prelude hiding (lookup)
 import Data.Maybe
 import Type.Reflection hiding (TypeRep, typeRep, typeRepTyCon)
-import Language.Hafly.Ast hiding(App)
 import qualified Language.Hafly.Ast as Ast
 import Data.Type.Equality
 import Data.Typeable (funResultTy, typeRepArgs, gcast)
@@ -19,10 +18,15 @@ import Data.Kind (Type)
 import Control.Monad
 import Control.Arrow
 import Data.List.NonEmpty (NonEmpty ((:|)))
+import qualified Data.Text as T
+import Control.Monad.Combinators.Expr
+import Text.Megaparsec
+import Data.Void
+import Control.Applicative
 
 data InterpreterData = InterpreterData {
     exprDefs     :: Map String Dynamic,
-    operatorDefs :: Map String (Int, Dynamic),
+    operatorDefs :: [[Operator (Const (String, Dynamic)) Ast]],
     monadDefs    :: [SomeDynamicMonad]
 }
 
@@ -79,11 +83,20 @@ addDef ctx name def = ctx {
     exprDefs = exprDefs ctx <> singleton name def
 }
 
+extractSpecs :: Operator (Const a) b -> a
+extractSpecs = \case
+  InfixN co  -> getConst co
+  InfixL co  -> getConst co
+  InfixR co  -> getConst co
+  Prefix co  -> getConst co
+  Postfix co -> getConst co
+  TernR co   -> getConst co
+
 interpret :: InterpreterData -> Ast -> Either TypeError Dynamic
 interpret ctx@InterpreterData {..} = \case
     Atom x  -> maybe (Left $ "Could not find atom " ++ x) Right $
-        lookup x (exprDefs <> fmap snd operatorDefs)
-    Const x -> pure x
+        lookup x (exprDefs <> fromList (extractSpecs <$> join operatorDefs))
+    Ast.Const x -> pure x
     Ast.App f' x' -> do
         f <- interpret ctx f'
         x <- interpret ctx x'
@@ -109,10 +122,10 @@ interpretLambda ctx@InterpreterData {..} (x:xs) body =
 interpretMultiArgLambda :: InterpreterData -> Ast -> NonEmpty String -> Either TypeError Dynamic
 interpretMultiArgLambda ctx@InterpreterData {..} body = \case
     (v :| []) ->
-        pure $ toDyn $ \x -> fromRight $ interpret ctx $ subst v (Const x) body
+        pure $ toDyn $ \x -> fromRight $ interpret ctx $ subst v (Ast.Const x) body
     (v :| v' : vs) ->
         pure $ toDyn $ \x -> fromRight $ interpretMultiArgLambda ctx
-            (subst v (Const x) body) (v' :| vs)
+            (subst v (Ast.Const x) body) (v' :| vs)
 
 -- TODO: Just a workaround for now to defer
 -- evaluation inside of lambdas
