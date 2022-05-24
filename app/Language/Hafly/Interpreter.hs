@@ -26,7 +26,7 @@ import Control.Applicative
 
 data InterpreterData = InterpreterData {
     exprDefs     :: Map String Dynamic,
-    operatorDefs :: [[Operator (Const (String, Dynamic)) Ast]],
+    operatorDefs :: [[Operator (Const (String, Dynamic)) Void]],
     monadDefs    :: [SomeDynamicMonad]
 }
 
