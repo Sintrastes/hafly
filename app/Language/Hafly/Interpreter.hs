@@ -5,7 +5,7 @@ import Data.Dynamic
 import Data.Data (Proxy)
 import Language.Hafly.Ast hiding (App)
 import Type.Reflection hiding (App)
-import Data.HashMap
+import Data.HashMap hiding (filter)
 import Prelude hiding (lookup)
 import Data.Maybe
 import Type.Reflection hiding (TypeRep, typeRep, typeRepTyCon)
@@ -81,7 +81,7 @@ addDef ctx name def = ctx {
 
 interpret :: InterpreterData -> Ast -> Either TypeError Dynamic
 interpret ctx@InterpreterData {..} = \case
-    Atom x  -> maybe (Left "Could not find atom") Right $
+    Atom x  -> maybe (Left $ "Could not find atom " ++ x) Right $
         lookup x (exprDefs <> fmap snd operatorDefs)
     Const x -> pure x
     Ast.App f' x' -> do
@@ -93,12 +93,8 @@ interpret ctx@InterpreterData {..} = \case
         let functionType = case f of
                 Dynamic z _ -> SomeTypeRep z
 
-        case funResultTy functionType argType of
-            Nothing -> Left $ "Cannot apply function of type " ++
-                show functionType ++ " to argument of type " ++
-                    show argType
-            Just resultType -> pure $ flattenDyn $
-                fromJust $ dynApply f x
+        flattenDyn <$>
+            flexibleDynApp f x
     Literal lit  -> pure $ interpretLit lit
     Sequence seq -> interpretSequence ctx seq
     Lambda vars exp -> interpretLambda ctx vars exp
@@ -115,12 +111,13 @@ interpretMultiArgLambda ctx@InterpreterData {..} body = \case
     (v :| []) ->
         pure $ toDyn $ \x -> fromRight $ interpret ctx $ subst v (Const x) body
     (v :| v' : vs) ->
-        pure $ toDyn $ \x -> fromRight $ interpretMultiArgLambda ctx 
+        pure $ toDyn $ \x -> fromRight $ interpretMultiArgLambda ctx
             (subst v (Const x) body) (v' :| vs)
 
 -- TODO: Just a workaround for now to defer
 -- evaluation inside of lambdas
 fromRight (Right x) = x
+fromRight (Left err) = error err
 
 interpretLit :: LiteralExpr -> Dynamic
 interpretLit = \case
@@ -170,10 +167,16 @@ interpretIO ctx ast = do
         Right x ->
             case fromDynamic @(IO Dynamic) x of
                 Nothing -> case fromDynamic @(IO ()) x of
-                    Nothing -> putStrLn $ "Error: Expression was not of type IO (). (Was " ++ 
+                    Nothing -> putStrLn $ "Error: Expression was not of type IO (). (Was " ++
                         show (dynTypeRep x) ++ ")"
                     Just action -> action
                 Just action -> action >> pure ()
+
+-- | Version of dynApply that will attempt to lift arguments to 
+-- Dynamic if nescesary.
+flexibleDynApp :: Dynamic -> Dynamic -> Either TypeError Dynamic
+flexibleDynApp f x = head <$> maybe (Left "") Right 
+    (sequence $ filter isJust [dynApply f x, dynApply f (toDyn x)])
 
 -- | Helper function to flatten nested dynamics
 -- into a single Dynamic.

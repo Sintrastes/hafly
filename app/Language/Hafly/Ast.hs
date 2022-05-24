@@ -21,6 +21,7 @@ data Ast =
 subst :: String -> Ast -> Ast -> Ast
 subst var x expr = case expr of
     Var v | var == v -> x
+    Atom v | var == v -> x
     App y z -> App 
         (subst var x y)
         (subst var x z)
