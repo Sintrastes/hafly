@@ -108,7 +108,6 @@ interpret ctx@InterpreterData {..} = \case
 
         flattenDyn <$>
             flexibleDynApp f x
-    Literal lit  -> pure $ interpretLit lit
     Sequence seq -> interpretSequence ctx seq
     Lambda vars exp -> interpretLambda ctx vars exp
 
@@ -130,13 +129,6 @@ interpretMultiArgLambda ctx@InterpreterData {..} body = \case
 -- evaluation inside of lambdas
 fromRight (Right x) = x
 fromRight (Left err) = error err
-
-interpretLit :: LiteralExpr -> Dynamic
-interpretLit = \case
-      (IntLit n) -> toDyn n
-      (DoubleLit x) -> toDyn x
-      (StringLit s) -> toDyn s
-      (Record map) -> toDyn map
 
 interpretSequence :: InterpreterData -> SequenceAst -> Either TypeError Dynamic
 interpretSequence ctx@InterpreterData {..} = \case

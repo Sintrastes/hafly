@@ -10,7 +10,6 @@ newtype Program = Program (Map String Ast)
 
 data Ast =
     Var String
-  | Literal LiteralExpr
   | App Ast Ast
   | Lambda [String] Ast
   | Sequence SequenceAst
@@ -37,13 +36,6 @@ substSeqExpr var x = \case
   Expr ast -> Expr $ subst var x ast
   BindExpr s ast -> BindExpr s $ 
       subst var x ast
-
-data LiteralExpr =
-    IntLit Int
-  | DoubleLit Double
-  | StringLit String
-  | Record (Map String LiteralExpr)
-        deriving(Show)
 
 data SequenceAst = SequenceAst [SequenceExpr]
     deriving(Show)

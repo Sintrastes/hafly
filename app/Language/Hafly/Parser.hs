@@ -99,7 +99,7 @@ expr opDefs = try (app opDefs)
   <|> baseExpr opDefs
 
 baseExpr :: [[Operator Parser Ast]] -> Parser Ast
-baseExpr opDefs = try (Literal <$> literal)
+baseExpr opDefs = try literal
     <|> try (lambdaExpr opDefs)
     <|> try (Var <$> identifier)
     <|> (Sequence <$> block opDefs)
@@ -113,18 +113,18 @@ lambdaExpr opDefs = do
     return $ Lambda vars body
 
 -- Parse a literal expression
-literal :: Parser LiteralExpr
+literal :: Parser Ast
 literal = try intLit <|>
     stringLit
 
 intLit = token $
-    IntLit . read <$> some digitChar
+    Const . toDyn . read @Int <$> some digitChar
 
 stringLit = token $ do
     char '"'
     x <- many $ noneOf ['"']
     char '"'
-    return $ StringLit x
+    return $ Const $ toDyn x
 
 -- Parse a sequntial block.
 block :: [[Operator Parser Ast]] -> Parser SequenceAst
