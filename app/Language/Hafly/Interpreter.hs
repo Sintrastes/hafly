@@ -24,7 +24,7 @@ import Text.Megaparsec
 import Data.Void
 import Control.Applicative
 
-data InterpreterData = InterpreterData {
+data InterpreterContext = InterpreterContext {
     exprDefs     :: Map String Dynamic,
     operatorDefs :: [[Operator (Const (String, Dynamic)) Void]],
     monadDefs    :: [SomeDynamicMonad]
@@ -78,7 +78,7 @@ extractM (DynamicMFor pA ma) = Dynamic pA <$> ma
 bindDyn :: forall m a b. (Monad m, Typeable m) => m a -> (a -> m Dynamic) -> m Dynamic
 bindDyn = (>>=)
 
-addDef :: InterpreterData -> String -> Dynamic -> InterpreterData
+addDef :: InterpreterContext -> String -> Dynamic -> InterpreterContext
 addDef ctx name def = ctx {
     exprDefs = exprDefs ctx <> singleton name def
 }
@@ -92,8 +92,8 @@ extractSpecs = \case
   Postfix co -> getConst co
   TernR co   -> getConst co
 
-interpret :: InterpreterData -> Ast -> Either TypeError Dynamic
-interpret ctx@InterpreterData {..} = \case
+interpret :: InterpreterContext -> Ast -> Either TypeError Dynamic
+interpret ctx@InterpreterContext {..} = \case
     Var x  -> maybe (Left $ "Undefined expression" ++ x) Right $
         lookup x (exprDefs <> fromList (extractSpecs <$> join operatorDefs))
     Ast.Const x -> pure x
@@ -111,14 +111,14 @@ interpret ctx@InterpreterData {..} = \case
     Sequence seq -> interpretSequence ctx seq
     Lambda vars exp -> interpretLambda ctx vars exp
 
-interpretLambda :: InterpreterData -> [String] -> Ast -> Either TypeError Dynamic
-interpretLambda ctx@InterpreterData {..} [] body =
+interpretLambda :: InterpreterContext -> [String] -> Ast -> Either TypeError Dynamic
+interpretLambda ctx@InterpreterContext {..} [] body =
     pure $ toDyn $ fromRight $ interpret ctx body
-interpretLambda ctx@InterpreterData {..} (x:xs) body =
+interpretLambda ctx@InterpreterContext {..} (x:xs) body =
     interpretMultiArgLambda ctx body (x :| xs)
 
-interpretMultiArgLambda :: InterpreterData -> Ast -> NonEmpty String -> Either TypeError Dynamic
-interpretMultiArgLambda ctx@InterpreterData {..} body = \case
+interpretMultiArgLambda :: InterpreterContext -> Ast -> NonEmpty String -> Either TypeError Dynamic
+interpretMultiArgLambda ctx@InterpreterContext {..} body = \case
     (v :| []) ->
         pure $ toDyn $ \x -> fromRight $ interpret ctx $ subst v (Ast.Const x) body
     (v :| v' : vs) ->
@@ -130,15 +130,15 @@ interpretMultiArgLambda ctx@InterpreterData {..} body = \case
 fromRight (Right x) = x
 fromRight (Left err) = error err
 
-interpretSequence :: InterpreterData -> SequenceAst -> Either TypeError Dynamic
-interpretSequence ctx@InterpreterData {..} = \case
+interpretSequence :: InterpreterContext -> SequenceAst -> Either TypeError Dynamic
+interpretSequence ctx@InterpreterContext {..} = \case
     SequenceAst [] -> Left "Cannot interpret an empty sequence"
     SequenceAst (x:xs) -> do
         SomeDynamicMonad m <- tryInferMonad ctx x
         toDyn <$> interpretMonadicSequence ctx m (x:xs)
 
-tryInferMonad :: InterpreterData -> SequenceExpr -> Either TypeError SomeDynamicMonad
-tryInferMonad ctx@InterpreterData {..} = \case
+tryInferMonad :: InterpreterContext -> SequenceExpr -> Either TypeError SomeDynamicMonad
+tryInferMonad ctx@InterpreterContext {..} = \case
   Expr ast -> do
       res <- interpret ctx ast
       defs <- sequence <$> forM monadDefs (\def@(SomeDynamicMonad (mnd :: DynamicMonad m)) ->
@@ -151,8 +151,8 @@ tryInferMonad ctx@InterpreterData {..} = \case
 
   BindExpr s ast -> tryInferMonad ctx (Expr ast)
 
-interpretMonadicSequence :: (Typeable m, Monad m) => InterpreterData -> DynamicMonad m -> [SequenceExpr] -> Either TypeError (m Dynamic)
-interpretMonadicSequence ctx@InterpreterData {..} m@DynamicMonad {..} = \case
+interpretMonadicSequence :: (Typeable m, Monad m) => InterpreterContext -> DynamicMonad m -> [SequenceExpr] -> Either TypeError (m Dynamic)
+interpretMonadicSequence ctx@InterpreterContext {..} m@DynamicMonad {..} = \case
     -- TODO: This probably won't work for monadic sequences returning a value.
     []     -> pure $ dynReturn (toDyn ())
     ((Expr x):xs) -> do
@@ -163,7 +163,7 @@ interpretMonadicSequence ctx@InterpreterData {..} m@DynamicMonad {..} = \case
     ((BindExpr x y):xs) -> undefined
 
 -- | Interpret a Hafly expression in the IO monad.
-interpretIO :: InterpreterData -> Ast -> IO ()
+interpretIO :: InterpreterContext -> Ast -> IO ()
 interpretIO ctx ast = do
     let result = interpret ctx ast
     case result of

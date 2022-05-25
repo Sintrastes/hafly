@@ -17,7 +17,7 @@ import Language.Hafly.Parser ( parseExpression )
 import Control.Monad.Combinators.Expr
 import Control.Applicative
 
-exampleContext = InterpreterData {
+exampleContext = InterpreterContext {
     exprDefs = fromList
         [
           ("printLn", toDyn putStrLn)
