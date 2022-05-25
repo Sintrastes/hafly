@@ -155,8 +155,8 @@ tryInferMonad ctx@InterpreterData {..} = \case
               Nothing -> pure Nothing
               Just dm -> pure $ Just def)
       case defs of
-          Nothing  -> Left "Could not find matching monad."
-          Just dms -> return $ head dms
+          Just (d:dms) -> return d
+          _ -> Left "Could not find matching monad."
 
   BindExpr s ast -> tryInferMonad ctx (Expr ast)
 
@@ -188,8 +188,15 @@ interpretIO ctx ast = do
 -- | Version of dynApply that will attempt to lift arguments to 
 -- Dynamic if nescesary.
 flexibleDynApp :: Dynamic -> Dynamic -> Either TypeError Dynamic
-flexibleDynApp f x = head <$> maybe (Left "") Right 
-    (sequence $ filter isJust [dynApply f x, dynApply f (toDyn x)])
+flexibleDynApp f x = do
+    res <- maybe (Left "") Right 
+        (sequence $ filter isJust [dynApply f x, dynApply f (toDyn x)])
+    case res of
+        [] -> Left ""
+        (x:xs) -> Right x
+
+flexibleDynApply :: Dynamic -> Dynamic -> Dynamic
+flexibleDynApply f x = fromRight $ flexibleDynApp f x
 
 -- | Helper function to flatten nested dynamics
 -- into a single Dynamic.

@@ -27,10 +27,15 @@ exampleContext = InterpreterData {
   , operatorDefs = 
         [
           [
-            InfixR $ Const ("+", toDyn ((+) :: Int -> Int -> Int))
-          , InfixR $ Const ("*", toDyn ((*) :: Int -> Int -> Int))
-          , InfixR $ Const ("-", toDyn ((-) :: Int -> Int -> Int))
+            InfixR $ Const ("*", toDyn ((*) :: Int -> Int -> Int))
           , InfixR $ Const ("/", toDyn (div :: Int -> Int -> Int))
+          ],
+          [
+            InfixR $ Const ("+", toDyn ((+) :: Int -> Int -> Int))
+          , InfixR $ Const ("-", toDyn ((-) :: Int -> Int -> Int))
+          ],
+          [
+            InfixR $ Const ("$", toDyn flexibleDynApply)
           ]
         ]
   , monadDefs = [fromMonad $ Proxy @IO]
