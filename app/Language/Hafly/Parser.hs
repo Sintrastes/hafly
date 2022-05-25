@@ -10,14 +10,17 @@ import qualified Data.Text as T
 import Text.Megaparsec.Char
 import Control.Monad.Combinators.Expr
 import Data.HashMap (fromList)
+import Control.Applicative (Const (getConst))
+import Data.Dynamic
+import qualified Language.Hafly.Ast as Ast
 
 type Parser = Parsec Void T.Text
 
-parseExpression :: T.Text -> Either (ParseErrorBundle T.Text Void) Ast
-parseExpression = parse (expr <* eof) ""
+parseExpression :: [[Operator (Const (String, Dynamic)) Void]] -> T.Text -> Either (ParseErrorBundle T.Text Void) Ast
+parseExpression opDefs = parse (opExpr (getOperatorDefs opDefs) <* eof) ""
 
-parseProgram :: T.Text -> Either (ParseErrorBundle T.Text Void) Program
-parseProgram = parse program ""
+parseProgram :: [[Operator (Const (String, Dynamic)) Void]] -> T.Text -> Either (ParseErrorBundle T.Text Void) Program
+parseProgram opDefs = parse (program $ getOperatorDefs opDefs) ""
 
 whitespace :: Parser ()
 whitespace = do
@@ -58,35 +61,55 @@ inParens p = do
     rightParen
     pure res
 
--- Parser for an entire hafly program.
-program :: Parser Program
-program = Program . fromList <$> 
-    sepBy exprDef (token newline)
+getOperatorDefs :: [[Operator (Const (String, Dynamic)) Void]] -> [[Operator Parser Ast]]
+getOperatorDefs = fmap (fmap toParser)
+  where
+    toParser :: Operator (Const (String, Dynamic)) Void -> Operator Parser Ast
+    toParser = \case
+        InfixN co  -> InfixN (parserFor $ getConst co)
+        InfixL co  -> InfixL (parserFor $ getConst co)
+        InfixR co  -> InfixR (parserFor $ getConst co)
+        Prefix co  -> Prefix (unaryParserFor $ getConst co)
+        Postfix co -> Postfix (unaryParserFor $ getConst co)
+        TernR co   -> error "Unsupported operator type"
 
-exprDef :: Parser (String, Ast)
-exprDef = do
+    parserFor :: (String, Dynamic) -> Parser (Ast -> Ast -> Ast)
+    parserFor (op, res) = do
+        token $ string (T.pack op)
+        pure $ App . App (Ast.Const res)
+
+    unaryParserFor :: (String, Dynamic) -> Parser (Ast -> Ast)
+    unaryParserFor (op, res) = undefined
+
+-- Parser for an entire hafly program.
+program :: [[Operator Parser Ast]] -> Parser Program
+program opDefs = Program . fromList <$>
+    sepBy (exprDef opDefs) (token newline)
+
+exprDef :: [[Operator Parser Ast]] -> Parser (String, Ast)
+exprDef opDefs = do
     x <- identifier
     equals
-    y <- expr
+    y <- expr opDefs
     return (x, y)
 
 -- | Parse an arbitrary hafly expression.
-expr :: Parser Ast
-expr = try app
-  <|> baseExpr
+expr :: [[Operator Parser Ast]] -> Parser Ast
+expr opDefs = try (app opDefs)
+  <|> baseExpr opDefs
 
-baseExpr :: Parser Ast
-baseExpr = try (Literal <$> literal)
-    <|> try lambdaExpr
+baseExpr :: [[Operator Parser Ast]] -> Parser Ast
+baseExpr opDefs = try (Literal <$> literal)
+    <|> try (lambdaExpr opDefs)
     <|> try (Atom <$> identifier)
-    <|> (Sequence <$> block)
+    <|> (Sequence <$> block opDefs)
 
-lambdaExpr :: Parser Ast
-lambdaExpr = do
+lambdaExpr :: [[Operator Parser Ast]] -> Parser Ast
+lambdaExpr opDefs = do
     lambdaToken
     vars <- sepBy identifier whitespace
     arrToken
-    body <- expr
+    body <- opExpr opDefs
     return $ Lambda vars body
 
 -- Parse a literal expression
@@ -94,7 +117,7 @@ literal :: Parser LiteralExpr
 literal = try intLit <|>
     stringLit
 
-intLit = token $ 
+intLit = token $
     IntLit . read <$> some digitChar
 
 stringLit = token $ do
@@ -104,29 +127,29 @@ stringLit = token $ do
     return $ StringLit x
 
 -- Parse a sequntial block.
-block :: Parser SequenceAst
-block = do
+block :: [[Operator Parser Ast]] -> Parser SequenceAst
+block opDefs = do
     leftBracket
-    res <- sepBy1 sequenceExpr (token semicolon)
+    res <- sepBy1 (sequenceExpr opDefs) (token semicolon)
     rightBracket
     return $ SequenceAst res
 
-sequenceExpr :: Parser SequenceExpr
-sequenceExpr = try bindExpr 
-    <|> Expr <$> expr
+sequenceExpr :: [[Operator Parser Ast]] -> Parser SequenceExpr
+sequenceExpr opDefs = try (bindExpr opDefs)
+    <|> Expr <$> expr opDefs
 
-bindExpr :: Parser SequenceExpr
-bindExpr = do
+bindExpr :: [[Operator Parser Ast]] -> Parser SequenceExpr
+bindExpr opDefs = do
     x <- identifier
     bindToken
-    y <- expr
+    y <- expr opDefs
     return $ BindExpr x y
 
 -- Parse a function application.
-app :: Parser Ast
-app = foldl1 App <$>
-    some (try baseExpr <|> inParens expr)
+app :: [[Operator Parser Ast]] -> Parser Ast
+app opDefs = foldl1 App <$>
+    some (try (baseExpr opDefs) <|> inParens (expr opDefs))
 
 -- Parse an expression with operators.
-opExpr :: Parser Ast
-opExpr = makeExprParser baseExpr undefined
+opExpr :: [[Operator Parser Ast]] -> Parser Ast
+opExpr opDefs = makeExprParser (expr opDefs) opDefs

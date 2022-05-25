@@ -61,7 +61,7 @@ main = runInputT defaultSettings repl
         case minput of
             Nothing -> return ()
             Just input -> do 
-                case parseExpression (T.pack input) of
+                case parseExpression (operatorDefs exampleContext) (T.pack input) of
                     Left err -> do
                         liftIO $ putStrLn "Error parsing input."
                         repl
