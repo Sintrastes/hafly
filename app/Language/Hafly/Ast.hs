@@ -9,19 +9,17 @@ import Data.Dynamic
 newtype Program = Program (Map String Ast)
 
 data Ast =
-    Atom String
+    Var String
   | Literal LiteralExpr
   | App Ast Ast
   | Lambda [String] Ast
   | Sequence SequenceAst
-  | Var String 
   | Const Dynamic
         deriving(Show)
 
 subst :: String -> Ast -> Ast -> Ast
 subst var x expr = case expr of
     Var v | var == v -> x
-    Atom v | var == v -> x
     App y z -> App 
         (subst var x y)
         (subst var x z)

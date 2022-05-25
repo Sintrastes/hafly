@@ -101,7 +101,7 @@ expr opDefs = try (app opDefs)
 baseExpr :: [[Operator Parser Ast]] -> Parser Ast
 baseExpr opDefs = try (Literal <$> literal)
     <|> try (lambdaExpr opDefs)
-    <|> try (Atom <$> identifier)
+    <|> try (Var <$> identifier)
     <|> (Sequence <$> block opDefs)
 
 lambdaExpr :: [[Operator Parser Ast]] -> Parser Ast

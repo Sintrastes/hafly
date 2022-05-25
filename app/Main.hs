@@ -41,20 +41,20 @@ exampleContext = InterpreterData {
   , monadDefs = [fromMonad $ Proxy @IO]
 }
 
-exampleAst = App (Atom "printLn")
+exampleAst = App (Var "printLn")
     (Literal $ StringLit "Hello, world!")
 
-exampleArithmetic = App (Atom "printLn") $
-    App (Atom "toString") $
-        App (App (Atom "+")
+exampleArithmetic = App (Var "printLn") $
+    App (Var "toString") $
+        App (App (Var "+")
             (Literal $ IntLit 2))
             (Literal $ IntLit 2)
 
 exampleSimpleSeq :: Ast
 exampleSimpleSeq = Sequence $  SequenceAst
     [
-      Expr $ App (Atom "printLn") (Literal $ StringLit "Hello... (wait for it)")
-    , Expr $ App (Atom "printLn") (Literal $ StringLit "World!")
+      Expr $ App (Var "printLn") (Literal $ StringLit "Hello... (wait for it)")
+    , Expr $ App (Var "printLn") (Literal $ StringLit "World!")
     ]
 
 main :: IO ()

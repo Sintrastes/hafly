@@ -94,7 +94,7 @@ extractSpecs = \case
 
 interpret :: InterpreterData -> Ast -> Either TypeError Dynamic
 interpret ctx@InterpreterData {..} = \case
-    Atom x  -> maybe (Left $ "Could not find atom " ++ x) Right $
+    Var x  -> maybe (Left $ "Undefined expression" ++ x) Right $
         lookup x (exprDefs <> fromList (extractSpecs <$> join operatorDefs))
     Ast.Const x -> pure x
     Ast.App f' x' -> do
@@ -111,7 +111,6 @@ interpret ctx@InterpreterData {..} = \case
     Literal lit  -> pure $ interpretLit lit
     Sequence seq -> interpretSequence ctx seq
     Lambda vars exp -> interpretLambda ctx vars exp
-    Var x        -> Left $ "Found unbound variable: " ++ show x
 
 interpretLambda :: InterpreterData -> [String] -> Ast -> Either TypeError Dynamic
 interpretLambda ctx@InterpreterData {..} [] body =
