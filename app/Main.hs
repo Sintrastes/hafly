@@ -41,22 +41,6 @@ exampleContext = InterpreterData {
   , monadDefs = [fromMonad $ Proxy @IO]
 }
 
-exampleAst = App (Var "printLn")
-    (Literal $ StringLit "Hello, world!")
-
-exampleArithmetic = App (Var "printLn") $
-    App (Var "toString") $
-        App (App (Var "+")
-            (Literal $ IntLit 2))
-            (Literal $ IntLit 2)
-
-exampleSimpleSeq :: Ast
-exampleSimpleSeq = Sequence $  SequenceAst
-    [
-      Expr $ App (Var "printLn") (Literal $ StringLit "Hello... (wait for it)")
-    , Expr $ App (Var "printLn") (Literal $ StringLit "World!")
-    ]
-
 main :: IO ()
 main = runInputT defaultSettings repl
   where
