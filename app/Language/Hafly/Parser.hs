@@ -148,7 +148,7 @@ bindExpr opDefs = do
 -- Parse a function application.
 app :: [[Operator Parser Ast]] -> Parser Ast
 app opDefs = foldl1 App <$>
-    some (try (baseExpr opDefs) <|> inParens (expr opDefs))
+    some (try (baseExpr opDefs) <|> inParens (opExpr opDefs))
 
 -- Parse an expression with operators.
 opExpr :: [[Operator Parser Ast]] -> Parser Ast
