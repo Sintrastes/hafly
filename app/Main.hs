@@ -3,7 +3,7 @@ module Main where
 
 import Data.Dynamic
 import Data.Typeable
-import Data.HashMap
+import Data.MultiMap
 import Prelude hiding (lookup)
 import Control.Concurrent (yield)
 import Data.Maybe
@@ -22,7 +22,7 @@ exampleContext = InterpreterContext {
         [
           ("printLn", toDyn putStrLn)
         , ("readLn", toDyn getLine)
-        , ("toString", toDyn (show :: Int -> String))
+        , ("show", toDyn (show @Int))
         ]
   , operatorDefs = 
         [

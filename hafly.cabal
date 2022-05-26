@@ -31,6 +31,7 @@ library hafly-lib
     hs-source-dirs:   app
     build-depends:    
         base ^>=4.14.3.0
+      , multimap
       , hashmap
       , text
       , megaparsec
@@ -48,7 +49,7 @@ executable hafly
     main-is:          app/Main.hs
     build-depends:    base ^>=4.14.3.0
                     , hafly-lib
-                    , hashmap
+                    , multimap
                     , text
                     , haskeline
                     , parser-combinators

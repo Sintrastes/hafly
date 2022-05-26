@@ -5,7 +5,7 @@ import Data.Dynamic
 import Data.Data (Proxy)
 import Language.Hafly.Ast hiding (App, Const)
 import Type.Reflection hiding (App)
-import Data.HashMap hiding (filter)
+import Data.MultiMap hiding (filter)
 import Prelude hiding (lookup)
 import Data.Maybe
 import Type.Reflection hiding (TypeRep, typeRep, typeRepTyCon)
@@ -20,12 +20,14 @@ import Control.Arrow
 import Data.List.NonEmpty (NonEmpty ((:|)))
 import qualified Data.Text as T
 import Control.Monad.Combinators.Expr
-import Text.Megaparsec
+import Text.Megaparsec hiding (empty)
 import Data.Void
-import Control.Applicative
+import Control.Applicative hiding (empty)
+import Data.Foldable
+import Data.List hiding (insert, lookup)
 
 data InterpreterContext = InterpreterContext {
-    exprDefs     :: Map String Dynamic,
+    exprDefs     :: MultiMap String Dynamic,
     operatorDefs :: [[Operator (Const (String, Dynamic)) Void]],
     monadDefs    :: [SomeDynamicMonad]
 }
@@ -80,7 +82,7 @@ bindDyn = (>>=)
 
 addDef :: InterpreterContext -> String -> Dynamic -> InterpreterContext
 addDef ctx name def = ctx {
-    exprDefs = exprDefs ctx <> singleton name def
+    exprDefs = fromMap $ toMap (exprDefs ctx) <> toMap (insert name def empty)
 }
 
 extractSpecs :: Operator (Const a) b -> a
@@ -94,8 +96,8 @@ extractSpecs = \case
 
 interpret :: InterpreterContext -> Ast -> Either TypeError Dynamic
 interpret ctx@InterpreterContext {..} = \case
-    Var x  -> maybe (Left $ "Undefined expression" ++ x) Right $
-        lookup x (exprDefs <> fromList (extractSpecs <$> join operatorDefs))
+    Var x  -> dispatched x $
+        lookup x $ fromMap (toMap exprDefs <> toMap (fromList (extractSpecs <$> join operatorDefs)))
     Ast.Const x -> pure x
     Ast.App f' x' -> do
         f <- interpret ctx f'
@@ -110,6 +112,26 @@ interpret ctx@InterpreterContext {..} = \case
             flexibleDynApp f x
     Sequence seq -> interpretSequence ctx seq
     Lambda vars exp -> interpretLambda ctx vars exp
+
+dispatched :: String -> [Dynamic] -> Either TypeError Dynamic
+dispatched x [] = Left $ "Found unbound variable " ++ x
+dispatched _ [x] = Right x
+dispatched _ (x:xs) = Right $
+    -- TODO: Build a function that inspects the type
+    -- of it's argument to figure out which function to
+    -- execute.
+    singlyDispatched (x : xs)
+
+singlyDispatched :: [Dynamic] -> Dynamic
+singlyDispatched fs = toDyn $ \(x :: Dynamic) ->
+    case find (== dynTypeRep x) types of
+        Nothing  -> error "Cannot apply function"
+        Just t -> let
+              indexOfType = fromJust $ elemIndex t types
+              fn = fs !! indexOfType
+          in dynApp fn x
+    where
+      types = fmap dynTypeRep fs
 
 interpretLambda :: InterpreterContext -> [String] -> Ast -> Either TypeError Dynamic
 interpretLambda ctx@InterpreterContext {..} [] body =
@@ -180,7 +202,7 @@ interpretIO ctx ast = do
 -- Dynamic if nescesary.
 flexibleDynApp :: Dynamic -> Dynamic -> Either TypeError Dynamic
 flexibleDynApp f x = do
-    res <- maybe (Left "") Right 
+    res <- maybe (Left "") Right
         (sequence $ filter isJust [dynApply f x, dynApply f (toDyn x)])
     case res of
         [] -> Left ""
