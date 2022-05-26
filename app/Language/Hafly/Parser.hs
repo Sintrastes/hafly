@@ -114,11 +114,19 @@ lambdaExpr opDefs = do
 
 -- Parse a literal expression
 literal :: Parser Ast
-literal = try intLit <|>
+literal = try floatLit <|>
+    try intLit <|>
     stringLit
 
 intLit = token $
     Const . toDyn . read @Int <$> some digitChar
+
+floatLit = token $
+    Const . toDyn . read @Double <$> do
+        integralPart <- some digitChar
+        char '.'
+        fractionalPart <- some digitChar
+        pure (integralPart ++ "." ++ fractionalPart)
 
 stringLit = token $ do
     char '"'
