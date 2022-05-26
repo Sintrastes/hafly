@@ -23,6 +23,8 @@ exampleContext = InterpreterContext {
           ("printLn", toDyn putStrLn)
         , ("readLn", toDyn getLine)
         , ("show", toDyn (show @Int))
+        , ("show", toDyn (show @String))
+        , ("show", toDyn (show @Double))
         ]
   , operatorDefs = 
         [

@@ -125,13 +125,18 @@ dispatched _ (x:xs) = Right $
 singlyDispatched :: [Dynamic] -> Dynamic
 singlyDispatched fs = toDyn $ \(x :: Dynamic) ->
     case find (== dynTypeRep x) types of
-        Nothing  -> error "Cannot apply function"
+        Nothing  -> error $ "Cannot apply function " ++ show (dynTypeRep x) ++ " " ++ show types
         Just t -> let
               indexOfType = fromJust $ elemIndex t types
               fn = fs !! indexOfType
           in dynApp fn x
     where
-      types = fmap dynTypeRep fs
+      types = mapMaybe (dynArgTypeRep . dynTypeRep) fs
+
+dynArgTypeRep :: SomeTypeRep -> Maybe SomeTypeRep
+dynArgTypeRep (SomeTypeRep x) = do
+    Fun arg _ <- pure x
+    pure $ SomeTypeRep arg
 
 interpretLambda :: InterpreterContext -> [String] -> Ast -> Either TypeError Dynamic
 interpretLambda ctx@InterpreterContext {..} [] body =
