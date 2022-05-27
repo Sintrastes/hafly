@@ -206,18 +206,15 @@ interpretMonadicSequence ctx@InterpreterContext {..} m@DynamicMonad {..} = \case
     ((BindExpr x y):xs) -> undefined
 
 -- | Interpret a Hafly expression in the IO monad.
-interpretIO :: InterpreterContext -> Ast -> IO ()
+interpretIO :: InterpreterContext -> Ast -> Maybe (IO ())
 interpretIO ctx ast = do
     let result = interpret ctx ast
     case result of
-        Left err -> putStrLn err
+        Left err -> Nothing
         Right x ->
             case fromDynamic @(IO Dynamic) x of
-                Nothing -> case fromDynamic @(IO ()) x of
-                    Nothing -> putStrLn $ "Error: Expression was not of type IO (). (Was " ++
-                        show (dynTypeRep x) ++ ")"
-                    Just action -> action
-                Just action -> action >> pure ()
+                Nothing -> fromDynamic @(IO ()) x
+                Just action -> Just $ action >> pure ()
 
 -- | Version of dynApply that will attempt to lift arguments to 
 -- Dynamic if nescesary.
