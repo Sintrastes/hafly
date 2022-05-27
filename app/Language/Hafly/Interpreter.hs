@@ -112,6 +112,17 @@ interpret ctx@InterpreterContext {..} = \case
             flexibleDynApp f x
     Sequence seq -> interpretSequence ctx seq
     Lambda vars exp -> interpretLambda ctx vars exp
+    Record _ -> undefined
+    Cond _if _then _else -> do
+        condition <- asBool =<< interpret ctx _if
+        if condition
+            then interpret ctx _then    
+            else interpret ctx _else
+
+asBool :: Dynamic -> Either TypeError Bool
+asBool (Dynamic tr x) = case testEquality tr (typeRep @Bool) of
+    Nothing   -> Left $ "Could not cast expression of type " ++ show tr ++ " to Bool."
+    Just Refl -> Right x
 
 dispatched :: String -> [Dynamic] -> Either TypeError Dynamic
 dispatched x [] = Left $ "Found unbound variable " ++ x
