@@ -76,10 +76,14 @@ main = runInputT defaultSettings repl
 
 tryShow :: InterpreterContext -> Dynamic -> Maybe (IO ())
 tryShow ctx@InterpreterContext {..} x = do
-    showF  <- listToMaybe $ lookup "show" exprDefs
-    result <- toMaybe $ flexibleDynApp showF x
-    str <- asString result
-    pure $ putStrLn str
+    showF  <- toMaybe $ dispatched "show" $
+        lookup "show" exprDefs
+    let result = flexibleDynApp showF x
+    case result of 
+      Left s -> Nothing
+      Right dy -> do
+          str <- asString $ flattenDyn dy
+          pure $ putStrLn str
 
 asString :: Dynamic -> Maybe String
 asString (Dynamic tr x) = case testEquality tr (typeRep @String) of
