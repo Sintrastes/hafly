@@ -76,7 +76,7 @@ getOperatorDefs = fmap (fmap toParser)
     parserFor :: (String, Dynamic) -> Parser (Ast -> Ast -> Ast)
     parserFor (op, res) = do
         token $ string (T.pack op)
-        pure $ App . App (Ast.Const res)
+        pure $ App . App (Ast.Var op)
 
     unaryParserFor :: (String, Dynamic) -> Parser (Ast -> Ast)
     unaryParserFor (op, res) = undefined

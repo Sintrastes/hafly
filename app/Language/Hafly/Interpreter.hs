@@ -207,10 +207,10 @@ interpretIO ctx ast = do
 -- Dynamic if nescesary.
 flexibleDynApp :: Dynamic -> Dynamic -> Either TypeError Dynamic
 flexibleDynApp f x = do
-    res <- maybe (Left "") Right
+    res <- maybe (Left $ "Cannot apply function of type " ++ show (dynTypeRep f) ++ " to argument of type " ++ show (dynTypeRep x)) Right
         (sequence $ filter isJust [dynApply f x, dynApply f (toDyn x)])
     case res of
-        [] -> Left ""
+        [] -> Left $ "Cannot apply function of type " ++ show (dynTypeRep f) ++ " to argument of type " ++ show (dynTypeRep x)
         (x:xs) -> Right x
 
 flexibleDynApply :: Dynamic -> Dynamic -> Dynamic
