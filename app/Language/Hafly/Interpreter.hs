@@ -97,7 +97,9 @@ extractSpecs = \case
 interpret :: InterpreterContext -> Ast -> Either TypeError Dynamic
 interpret ctx@InterpreterContext {..} = \case
     Var x  -> dispatched x $
-        lookup x $ fromMap (toMap exprDefs <> toMap (fromList (extractSpecs <$> join operatorDefs)))
+        lookup x $ fromMap (
+            toMap exprDefs <> 
+            toMap (fromList (extractSpecs <$> join operatorDefs)))
     Ast.Const x -> pure x
     Ast.App f' x' -> do
         f <- interpret ctx f'
@@ -110,13 +112,16 @@ interpret ctx@InterpreterContext {..} = \case
 
         flattenDyn <$>
             flexibleDynApp f x
-    Sequence seq -> interpretSequence ctx seq
-    Lambda vars exp -> interpretLambda ctx vars exp
-    Record _ -> undefined
+    Sequence seq -> 
+        interpretSequence ctx seq
+    Lambda vars exp -> 
+        interpretLambda ctx vars exp
+    Record r -> toDyn <$> 
+        sequence (interpret ctx <$> r)
     Cond _if _then _else -> do
         condition <- asBool =<< interpret ctx _if
         if condition
-            then interpret ctx _then    
+            then interpret ctx _then
             else interpret ctx _else
 
 asBool :: Dynamic -> Either TypeError Bool
