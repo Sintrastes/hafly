@@ -24,6 +24,12 @@ subst var x expr = case expr of
     App y z -> App 
         (subst var x y)
         (subst var x z)
+    Cond y z w -> Cond
+        (subst var x y)
+        (subst var x z)
+        (subst var x w)
+    Record r -> Record $
+        subst var x <$> r
     Lambda vars body -> Lambda vars
         (subst var x body)
     Sequence seq -> Sequence $ 
