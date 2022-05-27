@@ -13,6 +13,8 @@ data Ast =
   | App Ast Ast
   | Lambda [String] Ast
   | Sequence SequenceAst
+  | Record (Map String Ast)
+  | Cond Ast Ast Ast
   | Const Dynamic
         deriving(Show)
 
