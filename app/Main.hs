@@ -13,7 +13,7 @@ import Language.Hafly.Ast hiding (Const)
 import System.Console.Haskeline
 import Control.Monad.IO.Class
 import qualified Data.Text as T
-import Language.Hafly.Parser ( parseExpression )
+import Language.Hafly.Parser ( parseExpression, parseExprDef )
 import Control.Monad.Combinators.Expr
 import Control.Applicative
 import Data.Foldable
@@ -69,20 +69,27 @@ main = runInputT defaultSettings (repl exampleContext)
                 repl updatedCtx
 
     processReplInput :: InterpreterContext -> String -> InputT IO InterpreterContext
-    processReplInput ctx input = 
-        case parseExpression (operatorDefs ctx) (T.pack input) of
+    processReplInput ctx input = do
+        case parseExprDef (operatorDefs ctx) (T.pack input) of
+            Right (x, xDef) -> do
+                case interpret ctx xDef of
+                    Left s -> do
+                        liftIO $ putStrLn s
+                        return ctx
+                    Right dy -> return (addDef ctx x dy)
             Left err -> do
-                liftIO $ putStrLn $ errorBundlePretty err
-                return ctx
-            Right exp -> do
-                case interpretIO ctx exp of
-                    Just action -> liftIO action
-                    Nothing -> do
-                        case interpret ctx exp of
-                            Left s -> liftIO $ putStrLn s
-                            Right result -> do
-                                liftIO $ tryShow ctx result
-                                    (print result)
+                case parseExpression (operatorDefs ctx) (T.pack input) of
+                    Left err -> do
+                        liftIO $ putStrLn $ errorBundlePretty err
+                    Right exp -> do
+                        case interpretIO ctx exp of
+                            Just action -> liftIO action
+                            Nothing -> do
+                                case interpret ctx exp of
+                                    Left s -> liftIO $ putStrLn s
+                                    Right result -> do
+                                        liftIO $ tryShow ctx result
+                                            (print result)
                 return ctx
 
 tryShow :: InterpreterContext -> Dynamic -> IO () -> IO ()
