@@ -1,7 +1,8 @@
 
 module Language.Hafly.Parser(
     parseExpression,
-    parseProgram
+    parseProgram,
+    parseExprDef
 ) where
 import Language.Hafly.Ast
 import Text.Megaparsec hiding (token)
@@ -19,6 +20,9 @@ type Parser = Parsec Void T.Text
 
 parseExpression :: [[Operator (Const (String, Dynamic)) Void]] -> T.Text -> Either (ParseErrorBundle T.Text Void) Ast
 parseExpression opDefs = parse (opExpr (getOperatorDefs opDefs) <* eof) ""
+
+parseExprDef :: [[Operator (Const (String, Dynamic)) Void]] -> T.Text -> Either (ParseErrorBundle T.Text Void) (String, Ast)
+parseExprDef opDefs = parse (exprDef (getOperatorDefs opDefs) <* eof) ""
 
 parseProgram :: [[Operator (Const (String, Dynamic)) Void]] -> T.Text -> Either (ParseErrorBundle T.Text Void) Program
 parseProgram opDefs = parse (program $ getOperatorDefs opDefs) ""
