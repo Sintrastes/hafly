@@ -8,9 +8,9 @@ I wanted a simple, easy to learn scripting language that was easy to embed in pu
 
 Comparison with other projects:
 
-  * hslua: Easy for beginners, embeddable, yet is not pure haskell (hard to use in GHCJS).
-  * codeworld haskell: Possibly another good option in this space -- an educational variant of Haskell that can be run in GHCJS.
-  * hint: Very nice -- yet pretty heavyweight, and Haskell itself is not nescesarialy the easiest for beginners.
+  * [hslua](https://hackage.haskell.org/package/hslua): Easy for beginners, embeddable, yet is not pure haskell (hard to use in GHCJS).
+  * [codeworld](https://github.com/google/codeworld) haskell: Possibly another good option in this space -- an educational variant of Haskell that can be run in GHCJS.
+  * [hint](https://github.com/haskell-hint/hint): Very nice -- yet pretty heavyweight, and Haskell itself is not nescesarialy the easiest for beginners.
   * Various lisp/scheme implementations: Maybe not the easiest to embed. Arguably a bit of a tricky syntax for beginners.
 
 # Why dynamically typed?
