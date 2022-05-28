@@ -53,6 +53,8 @@ semicolon = token (char ';')
 
 colon = token (char ':')
 
+comma = token (char ',')
+
 equals = token (char '=')
 
 leftSquareBracket = token (char '[')
@@ -168,7 +170,7 @@ app opDefs = foldl1 App <$>
 record :: [[Operator Parser Ast]] -> Parser Ast
 record opDefs = do
     leftSquareBracket
-    fs <- some $ recordField opDefs
+    fs <- recordField opDefs `sepBy1` comma
     rightSquareBracket
     pure $ Record $ fromList fs
 
