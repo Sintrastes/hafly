@@ -31,6 +31,9 @@ exampleContext = InterpreterContext {
         , ("show", toDyn (show @String))
         , ("show", toDyn (show @Double))
         , ("show", toDyn (show @Bool))
+        , ("forEach", toDyn forEachList)
+        , ("map", toDyn (Prelude.map @Dynamic @Dynamic))
+        , ("filter", toDyn (Prelude.filter @Dynamic))
         ]
   , operatorDefs =
         [
@@ -56,6 +59,9 @@ exampleContext = InterpreterContext {
   , monadDefs = [fromMonad $ Proxy @IO]
 }
 
+forEachList :: [Dynamic] -> (Dynamic -> IO Dynamic) -> IO ()
+forEachList = forM_
+
 main :: IO ()
 main = runInputT defaultSettings (repl exampleContext)
   where
@@ -63,7 +69,7 @@ main = runInputT defaultSettings (repl exampleContext)
     repl ctx = do
         minput <- getInputLine "> "
         case minput of
-            Nothing -> 
+            Nothing ->
                 return ()
             Just input -> do
                 updatedCtx <- processReplInput ctx input
