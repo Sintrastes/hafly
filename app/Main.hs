@@ -20,6 +20,7 @@ import Data.Foldable
 import Data.Type.Equality
 import Data.Proxy
 import Control.Exception
+import Text.Megaparsec.Error
 
 exampleContext = InterpreterContext {
     exprDefs = fromList
@@ -62,14 +63,14 @@ main = runInputT defaultSettings repl
             Just input -> do
                 case parseExpression (operatorDefs exampleContext) (T.pack input) of
                     Left err -> do
-                        liftIO $ putStrLn "Error parsing input."
+                        liftIO $ putStrLn $ errorBundlePretty err
                         repl
                     Right exp -> do
                         case interpretIO exampleContext exp of
                             Just action -> liftIO action
                             Nothing -> do
                               case interpret exampleContext exp of
-                                Left s -> error ""
+                                Left s -> error s
                                 Right result -> liftIO $
                                     tryShow exampleContext result
                                         (print result)

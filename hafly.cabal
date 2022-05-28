@@ -53,6 +53,7 @@ executable hafly
                     , text
                     , haskeline
                     , parser-combinators
+                    , megaparsec
     default-extensions:
         LambdaCase
       , TypeApplications

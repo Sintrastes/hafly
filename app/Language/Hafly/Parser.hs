@@ -13,6 +13,7 @@ import Data.HashMap (fromList)
 import Control.Applicative (Const (getConst))
 import Data.Dynamic
 import qualified Language.Hafly.Ast as Ast
+import Data.Functor
 
 type Parser = Parsec Void T.Text
 
@@ -61,7 +62,11 @@ leftSquareBracket = token (char '[')
 
 rightSquareBracket = token (char ']')
 
-identifier = token (some alphaNumChar)
+identifier = do
+    x <- token (some alphaNumChar)
+    if x `elem` ["if", "else", "True", "False"]
+        then fail "Identifier cannot be reserved word"
+        else pure x
 
 inParens p = do
     leftParen
@@ -107,7 +112,7 @@ expr opDefs = try (app opDefs)
   <|> baseExpr opDefs
 
 baseExpr :: [[Operator Parser Ast]] -> Parser Ast
-baseExpr opDefs = try literal
+baseExpr opDefs = literal
     <|> try (record opDefs)
     <|> try (lambdaExpr opDefs)
     <|> try (Var <$> identifier)
@@ -125,7 +130,12 @@ lambdaExpr opDefs = do
 literal :: Parser Ast
 literal = try floatLit <|>
     try intLit <|>
-    stringLit
+    try stringLit <|>
+    booleanLit
+
+booleanLit = Const . toDyn <$> (
+    try (token (string "True") $> True) <|>
+        (token (string "False") $> False))
 
 intLit = token $
     Const . toDyn . read @Int <$> some digitChar
@@ -179,8 +189,20 @@ recordField opDefs = do
     label <- identifier
     colon
     x <- opExpr opDefs
-    pure (label, x) 
+    pure (label, x)
+
+ifExpr :: [[Operator Parser Ast]] -> Parser Ast
+ifExpr opDefs = do
+    token $ string "if"
+    leftParen
+    cond <- opExpr opDefs
+    rightParen
+    ifExpr <- opExpr opDefs
+    token $ string "else"
+    elseExpr <- opExpr opDefs
+    pure $ Cond cond ifExpr elseExpr
 
 -- Parse an expression with operators.
 opExpr :: [[Operator Parser Ast]] -> Parser Ast
-opExpr opDefs = makeExprParser (expr opDefs) opDefs
+opExpr opDefs = try (ifExpr opDefs) 
+    <|> makeExprParser (expr opDefs) opDefs
