@@ -39,6 +39,8 @@ exampleContext = InterpreterContext {
           , InfixR $ Const ("*", toDyn ((*) @Double))
           , InfixR $ Const ("/", toDyn (div @Int))
           , InfixR $ Const ("/", toDyn ((/) @Double))
+          , InfixR $ Const ("and", toDyn (&&))
+          , InfixR $ Const ("or", toDyn (||))
           ],
           [
             InfixR $ Const ("+", toDyn ((+) @Int))
