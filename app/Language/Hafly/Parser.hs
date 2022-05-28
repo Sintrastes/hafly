@@ -51,7 +51,13 @@ lambdaToken = token (char '\\')
 
 semicolon = token (char ';')
 
+colon = token (char ':')
+
 equals = token (char '=')
+
+leftSquareBracket = token (char '[')
+
+rightSquareBracket = token (char ']')
 
 identifier = token (some alphaNumChar)
 
@@ -100,6 +106,7 @@ expr opDefs = try (app opDefs)
 
 baseExpr :: [[Operator Parser Ast]] -> Parser Ast
 baseExpr opDefs = try literal
+    <|> try (record opDefs)
     <|> try (lambdaExpr opDefs)
     <|> try (Var <$> identifier)
     <|> (Sequence <$> block opDefs)
@@ -157,6 +164,20 @@ bindExpr opDefs = do
 app :: [[Operator Parser Ast]] -> Parser Ast
 app opDefs = foldl1 App <$>
     some (try (baseExpr opDefs) <|> inParens (opExpr opDefs))
+
+record :: [[Operator Parser Ast]] -> Parser Ast
+record opDefs = do
+    leftSquareBracket
+    fs <- some $ recordField opDefs
+    rightSquareBracket
+    pure $ Record $ fromList fs
+
+recordField :: [[Operator Parser Ast]] -> Parser (String, Ast)
+recordField opDefs = do
+    label <- identifier
+    colon
+    x <- opExpr opDefs
+    pure (label, x) 
 
 -- Parse an expression with operators.
 opExpr :: [[Operator Parser Ast]] -> Parser Ast
