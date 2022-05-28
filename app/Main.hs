@@ -56,28 +56,28 @@ exampleContext = InterpreterContext {
 }
 
 main :: IO ()
-main = runInputT defaultSettings repl
+main = runInputT defaultSettings (repl exampleContext)
   where
-    repl :: InputT IO ()
-    repl = do
+    repl :: InterpreterContext -> InputT IO ()
+    repl ctx = do
         minput <- getInputLine "> "
         case minput of
             Nothing -> return ()
             Just input -> do
-                case parseExpression (operatorDefs exampleContext) (T.pack input) of
+                case parseExpression (operatorDefs ctx) (T.pack input) of
                     Left err -> do
                         liftIO $ putStrLn $ errorBundlePretty err
-                        repl
+                        repl ctx
                     Right exp -> do
-                        case interpretIO exampleContext exp of
+                        case interpretIO ctx exp of
                             Just action -> liftIO action
                             Nothing -> do
-                              case interpret exampleContext exp of
+                              case interpret ctx exp of
                                 Left s -> error s
                                 Right result -> liftIO $
-                                    tryShow exampleContext result
+                                    tryShow ctx result
                                         (print result)
-                        repl
+                        repl ctx
 
 tryShow :: InterpreterContext -> Dynamic -> IO () -> IO ()
 tryShow ctx@InterpreterContext {..} x alt = catch (do
