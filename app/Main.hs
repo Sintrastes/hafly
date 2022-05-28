@@ -79,7 +79,7 @@ main = runInputT defaultSettings (repl exampleContext)
                     Just action -> liftIO action
                     Nothing -> do
                         case interpret ctx exp of
-                            Left s -> error s
+                            Left s -> liftIO $ putStrLn s
                             Right result -> do
                                 liftIO $ tryShow ctx result
                                     (print result)
