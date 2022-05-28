@@ -67,7 +67,6 @@ main = runInputT defaultSettings (repl exampleContext)
                 case parseExpression (operatorDefs ctx) (T.pack input) of
                     Left err -> do
                         liftIO $ putStrLn $ errorBundlePretty err
-                        repl ctx
                     Right exp -> do
                         case interpretIO ctx exp of
                             Just action -> liftIO action
@@ -77,7 +76,7 @@ main = runInputT defaultSettings (repl exampleContext)
                                 Right result -> liftIO $
                                     tryShow ctx result
                                         (print result)
-                        repl ctx
+                repl ctx
 
 tryShow :: InterpreterContext -> Dynamic -> IO () -> IO ()
 tryShow ctx@InterpreterContext {..} x alt = catch (do
