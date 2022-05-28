@@ -54,6 +54,7 @@ executable hafly
                     , haskeline
                     , parser-combinators
                     , megaparsec
+                    , hashmap
     default-extensions:
         LambdaCase
       , TypeApplications
