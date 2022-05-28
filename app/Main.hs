@@ -45,6 +45,7 @@ exampleContext = InterpreterContext {
           [
             InfixR $ Const ("+", toDyn ((+) @Int))
           , InfixR $ Const ("+", toDyn ((+) @Double))
+          , InfixR $ Const ("+", toDyn ((++) @Dynamic))
           , InfixR $ Const ("-", toDyn ((-) @Int))
           , InfixR $ Const ("-", toDyn ((-) @Double))
           ],
