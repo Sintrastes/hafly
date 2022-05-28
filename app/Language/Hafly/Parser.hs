@@ -118,6 +118,7 @@ expr opDefs = try (app opDefs)
 baseExpr :: [[Operator Parser Ast]] -> Parser Ast
 baseExpr opDefs = literal
     <|> try (record opDefs)
+    <|> try (listExpr opDefs)
     <|> try (lambdaExpr opDefs)
     <|> try (Var <$> identifier)
     <|> (Sequence <$> block opDefs)
@@ -187,6 +188,13 @@ record opDefs = do
     fs <- recordField opDefs `sepBy1` comma
     rightSquareBracket
     pure $ Record $ fromList fs
+
+listExpr :: [[Operator Parser Ast]] -> Parser Ast
+listExpr opDefs = do
+    leftSquareBracket
+    xs <- opExpr opDefs `sepBy1` comma
+    rightSquareBracket
+    pure $ List xs
 
 recordField :: [[Operator Parser Ast]] -> Parser (String, Ast)
 recordField opDefs = do

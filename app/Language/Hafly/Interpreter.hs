@@ -118,6 +118,8 @@ interpret ctx@InterpreterContext {..} = \case
         interpretLambda ctx vars exp
     Record r -> toDyn <$> 
         sequence (interpret ctx <$> r)
+    List xs -> toDyn <$>
+        sequence (interpret ctx <$> xs)
     Cond _if _then _else -> do
         condition <- asBool =<< interpret ctx _if
         if condition

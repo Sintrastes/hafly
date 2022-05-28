@@ -14,6 +14,7 @@ data Ast =
   | Lambda [String] Ast
   | Sequence SequenceAst
   | Record (Map String Ast)
+  | List [Ast]
   | Cond Ast Ast Ast
   | Const Dynamic
         deriving(Show)
@@ -30,6 +31,8 @@ subst var x expr = case expr of
         (subst var x w)
     Record r -> Record $
         subst var x <$> r
+    List xs -> List $
+        subst var x <$> xs
     Lambda vars body -> Lambda vars
         (subst var x body)
     Sequence seq -> Sequence $ 
