@@ -141,7 +141,8 @@ dispatched _ (x:xs) = Right $
 singlyDispatched :: [Dynamic] -> Dynamic
 singlyDispatched fs = toDyn $ \(x :: Dynamic) ->
     case find (== dynTypeRep x) types of
-        Nothing  -> error $ "Cannot apply function " ++ show (dynTypeRep x) ++ " " ++ show types
+        Nothing  -> error $ "Cannot apply dynamically dispatched function of types" ++ 
+            show types ++ " to an argument of type: " ++ show (dynTypeRep x)
         Just t -> let
               indexOfType = fromJust $ elemIndex t types
               fn = fs !! indexOfType
@@ -220,7 +221,8 @@ interpretIO ctx ast = do
 -- Dynamic if nescesary.
 flexibleDynApp :: Dynamic -> Dynamic -> Either TypeError Dynamic
 flexibleDynApp f x = do
-    res <- maybe (Left $ "Cannot apply function of type " ++ show (dynTypeRep f) ++ " to argument of type " ++ show (dynTypeRep x)) Right
+    res <- maybe (Left $ "Cannot apply function of type " ++ show (dynTypeRep f) ++ 
+            " to argument of type " ++ show (dynTypeRep x)) Right
         (sequence $ filter isJust [dynApply f x, dynApply f (toDyn x)])
     case res of
         [] -> Left $ "Cannot apply function of type " ++ show (dynTypeRep f) ++ " to argument of type " ++ show (dynTypeRep x)

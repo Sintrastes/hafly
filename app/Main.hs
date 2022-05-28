@@ -19,6 +19,7 @@ import Control.Applicative
 import Data.Foldable
 import Data.Type.Equality
 import Data.Proxy
+import Control.Exception
 
 exampleContext = InterpreterContext {
     exprDefs = fromList
@@ -69,21 +70,28 @@ main = runInputT defaultSettings repl
                             Nothing -> do
                               case interpret exampleContext exp of
                                 Left s -> error ""
-                                Right result -> case tryShow exampleContext result of
-                                    Nothing -> liftIO $ print result
-                                    Just action -> liftIO action
+                                Right result -> liftIO $
+                                    tryShow exampleContext result
+                                        (print result)
                         repl
 
-tryShow :: InterpreterContext -> Dynamic -> Maybe (IO ())
-tryShow ctx@InterpreterContext {..} x = do
-    showF  <- toMaybe $ dispatched "show" $
-        lookup "show" exprDefs
-    let result = flexibleDynApp showF x
-    case result of 
-      Left s -> Nothing
-      Right dy -> do
-          str <- asString $ flattenDyn dy
-          pure $ putStrLn str
+tryShow :: InterpreterContext -> Dynamic -> IO () -> IO ()
+tryShow ctx@InterpreterContext {..} x alt = catch (do
+    case toMaybe $ dispatched "show" $ lookup "show" exprDefs of
+      Nothing -> alt
+      Just showF -> do
+        -- Need to guard against excepions for now as
+        --  dynApply can throw.
+        -- Would be better to model this with Either in the 
+        --  future.
+        result <- catch
+            (evaluate $ maybe alt putStrLn . asString . flattenDyn <$> flexibleDynApp showF x)
+            (\(e :: SomeException) -> pure $ Left "")
+        case result of
+          Left s -> alt
+          Right act -> act)
+            (\(e :: SomeException) -> alt)
+
 
 asString :: Dynamic -> Maybe String
 asString (Dynamic tr x) = case testEquality tr (typeRep @String) of
