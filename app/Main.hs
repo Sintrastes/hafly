@@ -30,6 +30,7 @@ exampleContext = InterpreterContext {
         , ("show", toDyn (show @Int))
         , ("show", toDyn (show @String))
         , ("show", toDyn (show @Double))
+        , ("show", toDyn (show @Bool))
         ]
   , operatorDefs =
         [
