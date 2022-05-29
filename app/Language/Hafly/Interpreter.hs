@@ -25,6 +25,7 @@ import Data.Void
 import Control.Applicative hiding (empty)
 import Data.Foldable
 import Data.List hiding (insert, lookup)
+import Control.Monad.Fix
 
 data InterpreterContext = InterpreterContext {
     exprDefs     :: MultiMap String Dynamic,
@@ -94,11 +95,15 @@ extractSpecs = \case
   Postfix co -> getConst co
   TernR co   -> getConst co
 
+interpretRec :: InterpreterContext -> String -> Ast -> Either TypeError Dynamic
+interpretRec ctx name x = dynApp (toDyn $ fix @Dynamic) <$>
+    interpret ctx (Lambda [name] x)
+
 interpret :: InterpreterContext -> Ast -> Either TypeError Dynamic
 interpret ctx@InterpreterContext {..} = \case
     Var x  -> dispatched x $
         lookup x $ fromMap (
-            toMap exprDefs <> 
+            toMap exprDefs <>
             toMap (fromList (extractSpecs <$> join operatorDefs)))
     Ast.Const x -> pure x
     Ast.App f' x' -> do
@@ -112,11 +117,11 @@ interpret ctx@InterpreterContext {..} = \case
 
         flattenDyn <$>
             flexibleDynApp f x
-    Sequence seq -> 
+    Sequence seq ->
         interpretSequence ctx seq
-    Lambda vars exp -> 
+    Lambda vars exp ->
         interpretLambda ctx vars exp
-    Record r -> toDyn <$> 
+    Record r -> toDyn <$>
         sequence (interpret ctx <$> r)
     List xs -> toDyn <$>
         sequence (interpret ctx <$> xs)
@@ -143,7 +148,7 @@ dispatched _ (x:xs) = Right $
 singlyDispatched :: [Dynamic] -> Dynamic
 singlyDispatched fs = toDyn $ \(x :: Dynamic) ->
     case find (== dynTypeRep x) types of
-        Nothing  -> error $ "Cannot apply dynamically dispatched function of types" ++ 
+        Nothing  -> error $ "Cannot apply dynamically dispatched function of types" ++
             show types ++ " to an argument of type: " ++ show (dynTypeRep x)
         Just t -> let
               indexOfType = fromJust $ elemIndex t types
@@ -223,7 +228,7 @@ interpretIO ctx ast = do
 -- Dynamic if nescesary.
 flexibleDynApp :: Dynamic -> Dynamic -> Either TypeError Dynamic
 flexibleDynApp f x = do
-    res <- maybe (Left $ "Cannot apply function of type " ++ show (dynTypeRep f) ++ 
+    res <- maybe (Left $ "Cannot apply function of type " ++ show (dynTypeRep f) ++
             " to argument of type " ++ show (dynTypeRep x)) Right
         (sequence $ filter isJust [dynApply f x, dynApply f (toDyn x)])
     case res of

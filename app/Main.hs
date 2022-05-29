@@ -59,7 +59,8 @@ exampleContext = InterpreterContext {
           , InfixR $ Const ("-", toDyn ((-) @Double))
           ],
           [
-            InfixR $ Const ("$", toDyn flexibleDynApply)
+            InfixR $ Const ("$", toDyn flexibleDynApply),
+            InfixN $ Const ("==", toDyn ((==) @Int))
           ]
         ]
   , monadDefs = [fromMonad $ Proxy @IO]
@@ -85,7 +86,7 @@ main = runInputT defaultSettings (repl exampleContext)
     processReplInput ctx input = do
         case parseExprDef (operatorDefs ctx) (T.pack input) of
             Right (x, xDef) -> do
-                case interpret ctx xDef of
+                case flattenDyn <$> interpretRec ctx x xDef of
                     Left s -> do
                         liftIO $ putStrLn s
                         return ctx
