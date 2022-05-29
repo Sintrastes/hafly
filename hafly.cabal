@@ -28,6 +28,7 @@ library hafly-lib
         Language.Hafly.Parser
       , Language.Hafly.Interpreter
       , Language.Hafly.Ast
+      , Language.Hafly.Stdlib
     hs-source-dirs:   app
     build-depends:    
         base ^>=4.14.3.0

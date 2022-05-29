@@ -21,58 +21,10 @@ import Data.Proxy
 import Control.Exception
 import Text.Megaparsec.Error
 import Data.HashMap (Map)
-
-exampleContext = InterpreterContext {
-    exprDefs = fromList
-        [
-        -- IO Functions
-          ("printLn", toDyn putStrLn)
-        , ("readLn" , toDyn getLine)
-        -- Typeclass instances
-        , ("show"   , toDyn (show @Int))
-        , ("show"   , toDyn (show @String))
-        , ("show"   , toDyn (show @Double))
-        , ("show"   , toDyn (show @Bool))
-        , ("show"   , toDyn (show @[Dynamic]))
-        , ("show"   , toDyn (show @(Map String Dynamic)))
-        -- Higher order functions
-        , ("forEach", toDyn forEachList)
-        , ("map"    , toDyn (Prelude.map @Dynamic @Dynamic))
-        , ("filter" , toDyn (Prelude.filter @Dynamic))
-        ]
-  , operatorDefs =
-        [
-          [
-            InfixR $ Const ("*"  , toDyn ((*) @Int))
-          , InfixR $ Const ("*"  , toDyn ((*) @Double))
-          , InfixR $ Const ("/"  , toDyn (div @Int))
-          , InfixR $ Const ("/"  , toDyn ((/) @Double))
-          , InfixR $ Const ("and", toDyn (&&))
-          , InfixR $ Const ("or" , toDyn (||))
-          ],
-          [
-            InfixR $ Const ("+", toDyn ((+) @Int))
-          , InfixR $ Const ("+", toDyn ((+) @Double))
-          , InfixR $ Const ("+", toDyn ((++) @Dynamic))
-          , InfixR $ Const ("-", toDyn ((-) @Int))
-          , InfixR $ Const ("-", toDyn ((-) @Double))
-          ],
-          [
-            InfixR $ Const ("$", toDyn flexibleDynApply),
-            InfixN $ Const ("==", toDyn ((==) @Int)),
-            InfixN $ Const ("==", toDyn ((==) @Double)),
-            InfixN $ Const ("==", toDyn ((==) @String)),
-            InfixN $ Const ("==", toDyn ((==) @Bool))
-          ]
-        ]
-  , monadDefs = [fromMonad $ Proxy @IO]
-}
-
-forEachList :: [Dynamic] -> (Dynamic -> IO Dynamic) -> IO ()
-forEachList = forM_
+import qualified Language.Hafly.Stdlib as Hafly
 
 main :: IO ()
-main = runInputT defaultSettings (repl exampleContext)
+main = runInputT defaultSettings (repl Hafly.base)
   where
     repl :: InterpreterContext -> InputT IO ()
     repl ctx = do
