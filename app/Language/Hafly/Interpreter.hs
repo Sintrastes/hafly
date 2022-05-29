@@ -26,6 +26,7 @@ import Control.Applicative hiding (empty)
 import Data.Foldable
 import Data.List hiding (insert, lookup)
 import Control.Monad.Fix
+import Control.Exception hiding (TypeError)
 
 data InterpreterContext = InterpreterContext {
     exprDefs     :: MultiMap String Dynamic,
@@ -244,3 +245,29 @@ flattenDyn :: Dynamic -> Dynamic
 flattenDyn dyn@(Dynamic tr x) = case testEquality tr (typeRep @Dynamic) of
   Nothing -> dyn
   Just Refl -> flattenDyn x
+
+tryShow :: InterpreterContext -> Dynamic -> IO () -> IO ()
+tryShow ctx@InterpreterContext {..} x alt = catch (do
+    case toMaybe $ dispatched "show" $ lookup "show" exprDefs of
+      Nothing -> alt
+      Just showF -> do
+        -- Need to guard against excepions for now as
+        --  dynApply can throw.
+        -- Would be better to model this with Either in the 
+        --  future.
+        result <- catch
+            (evaluate $ maybe alt putStrLn . asString . flattenDyn <$> flexibleDynApp showF x)
+            (\(e :: SomeException) -> pure $ Left "")
+        case result of
+          Left s -> alt
+          Right act -> act)
+            (\(e :: SomeException) -> alt)
+
+
+asString :: Dynamic -> Maybe String
+asString (Dynamic tr x) = case testEquality tr (typeRep @String) of
+    Nothing   -> Nothing
+    Just Refl -> Just x
+
+toMaybe (Right x) = Just x
+toMaybe (Left _) = Nothing
