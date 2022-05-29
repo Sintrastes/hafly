@@ -34,6 +34,11 @@ Given sufficent time (and/or interested contributors!) I'll probably add optiona
 # Examples
 
 ```
+fact = \n -> if(n == 0) 1 
+    else n * fact (n - 1)
+```
+
+```
 -- Interperted in a monad allowing for the scheduling of 
 -- actions in IO.
 remindMe time timeToRemindAgain todo = schedule time {
