@@ -60,7 +60,10 @@ exampleContext = InterpreterContext {
           ],
           [
             InfixR $ Const ("$", toDyn flexibleDynApply),
-            InfixN $ Const ("==", toDyn ((==) @Int))
+            InfixN $ Const ("==", toDyn ((==) @Int)),
+            InfixN $ Const ("==", toDyn ((==) @Double)),
+            InfixN $ Const ("==", toDyn ((==) @String)),
+            InfixN $ Const ("==", toDyn ((==) @Bool))
           ]
         ]
   , monadDefs = [fromMonad $ Proxy @IO]
