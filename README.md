@@ -1,5 +1,14 @@
 # hafly
 
+<p align="center">
+  <a href="https://haskell.org/">
+    <img src="https://img.shields.io/badge/Language-Haskell-blue">
+  </a>
+  <a href="https://github.com/Sintrastes/hafly/actions/workflows/build.yml">
+    <img src="https://github.com/Sintrastes/hafly/actions/workflows/build.yml/badge.svg">
+  </a>
+</p>
+
 hafly (pronounced "half-lee") is a simple dynamic embeddable scripting language in Haskell.
 
 See [hafly-web-repl](https://github.com/Sintrastes/hafly-web-repl) for a repo implementing an embeddable hafly REPL.
