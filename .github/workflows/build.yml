@@ -18,7 +18,7 @@ jobs:
     - name: Build executable
       run: |
         nix-build -o result
-        cp results/bin/hafly .
+        cp result/bin/hafly .
     - name: Archive executable
       uses: actions/upload-artifact@v2
       with:
