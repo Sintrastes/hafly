@@ -15,6 +15,14 @@ jobs:
           binary-caches = https://cache.nixos.org https://nixcache.reflex-frp.org
           binary-cache-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= ryantrinkle.com-1:JJiAKaRv9mWgpVAz8dwewnZe0AzzEAzPkagE9SP5NWI=
           binary-caches-parallel-connections = 40
-    - name: Build with nix
+    - name: Build executable
       run: |
-        nix-build -A hafly -o result
+        nix-build -o result
+        cp results/bin/hafly .
+    - name: Archive executable
+      uses: actions/upload-artifact@v2
+      with:
+        name: hafly
+        path: hafly
+        
+      
