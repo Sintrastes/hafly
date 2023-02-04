@@ -116,7 +116,7 @@ expr opDefs = try (app opDefs)
   <|> baseExpr opDefs
 
 baseExpr :: [[Operator Parser Ast]] -> Parser Ast
-baseExpr opDefs = literal
+baseExpr opDefs = literal opDefs
     <|> try (record opDefs)
     <|> try (listExpr opDefs)
     <|> try (lambdaExpr opDefs)
@@ -132,10 +132,10 @@ lambdaExpr opDefs = do
     return $ Lambda vars body
 
 -- Parse a literal expression
-literal :: Parser Ast
-literal = try floatLit <|>
+literal :: [[Operator Parser Ast]] -> Parser Ast
+literal opDefs = try floatLit <|>
     try intLit <|>
-    try stringLit <|>
+    try (String <$> stringLit opDefs) <|>
     booleanLit
 
 booleanLit = Const . toDyn <$> (
@@ -152,25 +152,48 @@ floatLit = token $
         fractionalPart <- some digitChar
         pure (integralPart ++ "." ++ fractionalPart)
 
-stringLit = token $ do
+stringLit opDefs = token $ do
     char '"'
-    x <- many $ noneOf ['"', '$']
-    char '"'
-    return $ Const $ toDyn x
+    stringLitRec opDefs
 
-quotedVar :: [[Operator Parser Ast]] -> Parser Ast
+stringLitRec :: [[Operator Parser Ast]] -> Parser [StringSegment]
+stringLitRec opDefs = do
+    x <- many $ noneOf ['"', '$']
+    nextChar <- lookAhead anySingle
+    case nextChar of
+        '$' -> do
+            -- Try to parse one of the literals
+            v <- try (quotedVar opDefs)  <|> 
+                 try (quotedExpr opDefs) <|> 
+                 quotedBracketVar opDefs
+            -- Continue parsing the rest of the string literal.
+            rest <- stringLitRec opDefs
+            pure $ StringSeq x : v : rest
+        _   -> do
+            char '"'
+            return [StringSeq x]
+
+quotedVar :: [[Operator Parser Ast]] -> Parser StringSegment
 quotedVar opDefs = do
     char '$'
     x <- identifier
-    pure $ Var x
+    pure $ QuotedVar x
 
-quotedExpr :: [[Operator Parser Ast]] -> Parser Ast
+quotedBracketVar :: [[Operator Parser Ast]] -> Parser StringSegment
+quotedBracketVar opDefs = do
+    char '$'
+    char '{'
+    x <- identifier
+    char '}'
+    pure $ QuotedVar x
+
+quotedExpr :: [[Operator Parser Ast]] -> Parser StringSegment
 quotedExpr opDefs = do
     char '$'
     char '{'
     e <- expr opDefs
     char '}'
-    pure e
+    pure $ QuotedExpr e
 
 -- Parse a sequntial block.
 block :: [[Operator Parser Ast]] -> Parser SequenceAst

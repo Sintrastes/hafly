@@ -140,11 +140,27 @@ interpret ctx@InterpreterContext {..} = \case
         sequence (interpret ctx <$> r)
     List xs -> toDyn <$>
         sequence (interpret ctx <$> xs)
+    String xs -> interpretStringLit ctx xs
     Cond _if _then _else -> do
         condition <- asBool =<< interpret ctx _if
         if condition
             then interpret ctx _then
             else interpret ctx _else
+
+interpretStringLit :: InterpreterContext -> [StringSegment] -> Either TypeError Dynamic
+interpretStringLit ctx@InterpreterContext{..} [] = pure $ toDyn @String ""
+interpretStringLit ctx@InterpreterContext{..} (QuotedVar x:xs) = do
+    rest <- interpretStringLit ctx xs
+    interpret ctx $ 
+        Ast.App (Ast.App (Ast.Const $ toDyn ((++) @Char)) (Var x)) (Ast.Const rest)
+interpretStringLit ctx@InterpreterContext{..} (StringSeq x:xs) = do
+    rest <- interpretStringLit ctx xs
+    interpret ctx $ 
+        Ast.App (Ast.App (Ast.Const $ toDyn ((++) @Char)) (Ast.Const $ toDyn x)) (Ast.Const rest)
+interpretStringLit ctx@InterpreterContext{..} (QuotedExpr x:xs) = do
+    rest <- interpretStringLit ctx xs
+    interpret ctx $ 
+        Ast.App (Ast.App (Ast.Const $ toDyn ((++) @Char)) (Ast.App (Var "show") x)) (Ast.Const rest)
 
 asBool :: Dynamic -> Either TypeError Bool
 asBool (Dynamic tr x) = case testEquality tr (typeRep @Bool) of

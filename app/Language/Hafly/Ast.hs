@@ -15,9 +15,16 @@ data Ast =
   | Sequence SequenceAst
   | Record (Map String Ast)
   | List [Ast]
+  | String [StringSegment]
   | Cond Ast Ast Ast
   | Const Dynamic
         deriving(Show)
+
+data StringSegment = 
+    QuotedVar String 
+  | StringSeq String 
+  | QuotedExpr Ast
+    deriving(Show)
 
 subst :: String -> Ast -> Ast -> Ast
 subst var x expr = case expr of
