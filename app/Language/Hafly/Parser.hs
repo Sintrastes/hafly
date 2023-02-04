@@ -154,7 +154,7 @@ floatLit = token $
 
 stringLit = token $ do
     char '"'
-    x <- many $ noneOf ['"']
+    x <- many $ noneOf ['"', '$']
     char '"'
     return $ Const $ toDyn x
 

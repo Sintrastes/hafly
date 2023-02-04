@@ -199,7 +199,7 @@ fromRight (Left err) = error err
 interpretSequence :: InterpreterContext -> SequenceAst -> Either TypeError Dynamic
 interpretSequence ctx@InterpreterContext {..} = \case
     SequenceAst [] -> Left "Cannot interpret an empty sequence"
-    SequenceAst (x:xs) -> do
+    SequenceAst ~(x:xs) -> do
         SomeDynamicMonad m <- tryInferMonad ctx x
         toDyn <$> interpretMonadicSequence ctx m [] (x:xs)
 
@@ -228,13 +228,14 @@ interpretMonadicSequence ctx@InterpreterContext{..} m@DynamicMonad{..} bound = \
     []     -> pure $ dynReturn (toDyn ())
     ((Expr x):xs) -> do
         x' <- interpret ctx (substAll bound x)
-        rest <- interpretMonadicSequence ctx m bound xs
         mx <- maybe (Left "Expression was not of the correct monadic type") Right $ toDynM x'
-        pure $ dynSeq m mx rest
+        pure $ dynBind mx (\_ -> 
+            fromRight $ interpretMonadicSequence ctx m bound xs)
     ((BindExpr x y):xs) -> do
         y' <- trace (show y) $ interpret ctx y
         my <- maybe (Left "Expression was not of the correct monadic type") Right $ toDynM y'
-        pure $ dynBind my (\r -> fromRight $ interpretMonadicSequence ctx m (bound ++ [(x, Ast.Const r)]) xs)
+        pure $ dynBind my (\r -> 
+            fromRight $ interpretMonadicSequence ctx m (bound ++ [(x, Ast.Const r)]) xs)
 
 -- | Interpret a Hafly expression in the IO monad.
 interpretIO :: InterpreterContext -> Ast -> Maybe (IO ())
