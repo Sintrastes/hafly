@@ -1,4 +1,5 @@
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE InstanceSigs #-}
 
 module Language.Hafly.Interpreter where
 import Data.Dynamic
@@ -35,6 +36,17 @@ data InterpreterContext = InterpreterContext {
     operatorDefs :: [[Operator (Const (String, Dynamic)) Void]],
     monadDefs    :: [SomeDynamicMonad]
 }
+
+instance Semigroup InterpreterContext where
+    (<>) :: InterpreterContext -> InterpreterContext -> InterpreterContext
+    x <> y = InterpreterContext {
+        exprDefs = fromMap $ toMap (exprDefs x) <> toMap (exprDefs y),
+        operatorDefs = operatorDefs x <> operatorDefs y,
+        monadDefs = monadDefs x <> monadDefs y
+    }
+
+instance Monoid InterpreterContext where
+    mempty = InterpreterContext empty [] []
 
 data DynamicM = forall a m. (Monad m, Typeable m) => DynamicM (TypeRep a) (TypeRep m) (m a)
 
