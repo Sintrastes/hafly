@@ -4,6 +4,7 @@ module Language.Hafly.Interpreter where
 import Data.Dynamic
 import Data.Data (Proxy)
 import Language.Hafly.Ast hiding (App, Const)
+import qualified Language.Hafly.Ast as Ast
 import Type.Reflection hiding (App)
 import Data.MultiMap hiding (filter)
 import Prelude hiding (lookup)
@@ -27,6 +28,7 @@ import Data.Foldable
 import Data.List hiding (insert, lookup)
 import Control.Monad.Fix
 import Control.Exception hiding (TypeError)
+import Debug.Trace
 
 data InterpreterContext = InterpreterContext {
     exprDefs     :: MultiMap String Dynamic,
@@ -187,7 +189,7 @@ interpretSequence ctx@InterpreterContext {..} = \case
     SequenceAst [] -> Left "Cannot interpret an empty sequence"
     SequenceAst (x:xs) -> do
         SomeDynamicMonad m <- tryInferMonad ctx x
-        toDyn <$> interpretMonadicSequence ctx m (x:xs)
+        toDyn <$> interpretMonadicSequence ctx m [] (x:xs)
 
 tryInferMonad :: InterpreterContext -> SequenceExpr -> Either TypeError SomeDynamicMonad
 tryInferMonad ctx@InterpreterContext {..} = \case
@@ -203,16 +205,24 @@ tryInferMonad ctx@InterpreterContext {..} = \case
 
   BindExpr s ast -> tryInferMonad ctx (Expr ast)
 
-interpretMonadicSequence :: (Typeable m, Monad m) => InterpreterContext -> DynamicMonad m -> [SequenceExpr] -> Either TypeError (m Dynamic)
-interpretMonadicSequence ctx@InterpreterContext {..} m@DynamicMonad {..} = \case
+interpretMonadicSequence :: (Typeable m, Monad m) => 
+    InterpreterContext
+ -> DynamicMonad m 
+ -> [(String, Ast)]
+ -> [SequenceExpr] 
+ -> Either TypeError (m Dynamic)
+interpretMonadicSequence ctx@InterpreterContext{..} m@DynamicMonad{..} bound = \case
     -- TODO: This probably won't work for monadic sequences returning a value.
     []     -> pure $ dynReturn (toDyn ())
     ((Expr x):xs) -> do
-        x' <- interpret ctx x
-        rest <- interpretMonadicSequence ctx m xs
+        x' <- interpret ctx (substAll bound x)
+        rest <- interpretMonadicSequence ctx m bound xs
         mx <- maybe (Left "Expression was not of the correct monadic type") Right $ toDynM x'
         pure $ dynSeq m mx rest
-    ((BindExpr x y):xs) -> undefined
+    ((BindExpr x y):xs) -> do
+        y' <- trace (show y) $ interpret ctx y
+        my <- maybe (Left "Expression was not of the correct monadic type") Right $ toDynM y'
+        pure $ dynBind my (\r -> fromRight $ interpretMonadicSequence ctx m (bound ++ [(x, Ast.Const r)]) xs)
 
 -- | Interpret a Hafly expression in the IO monad.
 interpretIO :: InterpreterContext -> Ast -> Maybe (IO ())

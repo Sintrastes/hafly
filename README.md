@@ -44,14 +44,14 @@ fact = \n -> if(n == 0) 1
 -- Interperted in a monad allowing for the scheduling of 
 -- actions in IO.
 remindMe time timeToRemindAgain todo = schedule time {
-    result = prompt "Don't forget! $todo"
+    result <- prompt "Don't forget! $todo";
     case result {
-        Ok -> done
+        Ok -> done;
         Cancel -> {
             schedule timeToRemindAgain {
                 remindMe timeToRemindAgain timeToRemindAgain todo
             }
-        }
+        };
     }
 }
 ```
@@ -62,12 +62,12 @@ remindMe time timeToRemindAgain todo = schedule time {
 --    { name: "bob", age: 42 }
 entryForm = Column {
     Row {
-        Text "Name: "
+        Text "Name: ";
         nameEntry <- TextEntry
             .bind(name)
-    }
+    };
     Row {
-        Text "Age: "
+        Text "Age: ";
         ageEntry <- TextEntry
             .bind(age)
     }

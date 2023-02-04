@@ -39,6 +39,10 @@ subst var x expr = case expr of
         substSeq var x seq 
     _ -> expr
 
+substAll :: [(String, Ast)] -> Ast -> Ast
+substAll [] x = x
+substAll ((x,y):xs) a = substAll xs $ subst x y a
+
 substSeq :: String -> Ast -> SequenceAst -> SequenceAst
 substSeq var x (SequenceAst ss) = SequenceAst (fmap (substSeqExpr var x) ss)
 
