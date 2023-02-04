@@ -158,6 +158,20 @@ stringLit = token $ do
     char '"'
     return $ Const $ toDyn x
 
+quotedVar :: [[Operator Parser Ast]] -> Parser Ast
+quotedVar opDefs = do
+    char '$'
+    x <- identifier
+    pure $ Var x
+
+quotedExpr :: [[Operator Parser Ast]] -> Parser Ast
+quotedExpr opDefs = do
+    char '$'
+    char '{'
+    e <- expr opDefs
+    char '}'
+    pure e
+
 -- Parse a sequntial block.
 block :: [[Operator Parser Ast]] -> Parser SequenceAst
 block opDefs = do
