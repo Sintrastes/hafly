@@ -55,5 +55,7 @@ base = InterpreterContext {
   , monadDefs = [fromMonad $ Proxy @IO]
 }
 
-forEachList :: [Dynamic] -> (Dynamic -> IO Dynamic) -> IO ()
-forEachList = forM_
+forEachList :: [Dynamic] -> (Dynamic -> Dynamic) -> IO ()
+forEachList xs f = forM_ xs $ \x -> do
+  maybe (error "Function did not have expected IO result") id $ 
+    toDynM (f x)
