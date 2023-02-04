@@ -44,7 +44,17 @@ subst var x expr = case expr of
         (subst var x body)
     Sequence seq -> Sequence $ 
         substSeq var x seq 
+    String xs -> String $ substString var x xs
     _ -> expr
+
+substString :: String -> Ast -> [StringSegment] -> [StringSegment]
+substString v a [] = []
+substString v a (x:xs) = substStringSegment v a x : substString v a xs
+
+substStringSegment :: String -> Ast -> StringSegment -> StringSegment
+substStringSegment x a (QuotedVar y) | x == y = QuotedExpr a
+substStringSegment x a (QuotedExpr y) = QuotedExpr $ subst x a y
+substStringSegment x a y = y
 
 substAll :: [(String, Ast)] -> Ast -> Ast
 substAll [] x = x
