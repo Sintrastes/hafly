@@ -26,6 +26,7 @@ base = InterpreterContext {
         , ("forEach", toDyn forEachList)
         , ("map"    , toDyn (Prelude.map @Dynamic @Dynamic))
         , ("filter" , toDyn (Prelude.filter @Dynamic))
+        , ("foldr"  , toDyn (Prelude.foldr @[] @Dynamic @Dynamic))
         ]
   , operatorDefs =
         [
