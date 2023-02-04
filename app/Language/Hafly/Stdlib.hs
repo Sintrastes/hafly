@@ -8,14 +8,18 @@ import Control.Monad.Combinators.Expr
 import Control.Applicative
 import Data.Proxy
 import Control.Monad (forM_)
+import Type.Reflection (SomeTypeRep(SomeTypeRep))
 
 base = InterpreterContext {
     exprDefs = fromList
         [
+        -- Type introspection
+          ("type", toDyn dynTypeRep)
         -- IO Functions
-          ("printLn", toDyn putStrLn)
+        , ("printLn", toDyn putStrLn)
         , ("readLn" , toDyn getLine)
         -- Typeclass instances
+        , ("show"   , toDyn (show @SomeTypeRep))
         , ("show"   , toDyn (show @Int))
         , ("show"   , toDyn (show @String))
         , ("show"   , toDyn (show @Double))
