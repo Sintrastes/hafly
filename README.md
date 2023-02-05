@@ -32,11 +32,14 @@ Given sufficent time (and/or interested contributors!) I'll probably add optiona
 
 # Features / Progress
 
+ * [x] Naturally sandboxed and extensible.
+ * [x] Multiple Dispatch (i.e. the dymically-typed version of multi-parameter type classes) 
  * [x] Higher-order functions
  * [x] Everything is an expression
  * [x] Recursion
  * [x] Syntax: What if Haskell... but with a bit of Kotlin/Rust thrown in for good measure?
  * [x] Kotlin-esque string templating.
+ * [ ] IORef-backed ML-like references (but only in IO!)
  * [x] Sequential blocks that can be bound to any monad.
  * [ ] Flexible binding of names in sequential blocks (do notation++)™.
  * [ ] Simple pattern matching.
