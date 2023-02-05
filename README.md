@@ -30,17 +30,18 @@ I wanted something quick and no-nonsense (implementation-wise), and easy to exte
 
 Given sufficent time (and/or interested contributors!) I'll probably add optional static type checking capabilities in the future.
 
-# Features
+# Features / Progress
 
- * Syntax: What if Haskell... but with a bit of Kotlin thrown in for good measure?
- * Kotlin-esque string templating.
- * Sequential blocks that can be bound to any monad.
- * Flexible binding of names in sequential blocks (do notation++)™.
- * Simple pattern matching.
- * Flexible records -- because we're not cavemen.
- * Record dot and universal function call syntax.
- * Strictly evaluated.
-
+ * [x] Higher-order functions
+ * [x] Recursion
+ * [x] Syntax: What if Haskell... but with a bit of Kotlin/Rust thrown in for good measure?
+ * [x] Kotlin-esque string templating.
+ * [x] Sequential blocks that can be bound to any monad.
+ * [ ] Flexible binding of names in sequential blocks (do notation++)™.
+ * [ ] Simple pattern matching.
+ * [x] Flexible records -- because we're not cavemen.
+ * [ ] Record dot and universal function call syntax.
+ * [ ] Reactive polymorphism.
 
 # Examples
 
