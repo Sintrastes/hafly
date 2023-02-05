@@ -45,12 +45,12 @@ Given sufficent time (and/or interested contributors!) I'll probably add optiona
 
 # Examples
 
-```
+```haskell
 fact = \n -> if(n == 0) 1 
     else n * fact (n - 1)
 ```
 
-```
+```haskell
 -- Interperted in a monad allowing for the scheduling of 
 -- actions in IO.
 remindMe time timeToRemindAgain todo = schedule time {
@@ -66,7 +66,7 @@ remindMe time timeToRemindAgain todo = schedule time {
 }
 ```
 
-```
+```haskell
 -- Interpreted in a "builder" monad for a UI.
 -- builds up a record of the form:
 --    { name: "bob", age: 42 }
