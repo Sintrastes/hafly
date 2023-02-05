@@ -158,7 +158,7 @@ stringLit opDefs = token $ do
 
 stringLitRec :: [[Operator Parser Ast]] -> Parser [StringSegment]
 stringLitRec opDefs = do
-    x <- many $ noneOf ['"', '$']
+    x <- many $ noneOf ['"', '$', '\\']
     nextChar <- lookAhead anySingle
     case nextChar of
         '$' -> do
@@ -169,6 +169,12 @@ stringLitRec opDefs = do
             -- Continue parsing the rest of the string literal.
             rest <- stringLitRec opDefs
             pure $ StringSeq x : v : rest
+        '\\' -> do
+            char '\\'
+            quotedChar <- anySingle
+            -- Continue parsing the rest of the string literal.
+            rest <- stringLitRec opDefs
+            pure $ StringSeq [quotedChar] : rest
         _   -> do
             char '"'
             return [StringSeq x]
