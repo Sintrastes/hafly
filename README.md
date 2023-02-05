@@ -39,13 +39,14 @@ Given sufficent time (and/or interested contributors!) I'll probably add optiona
  * [x] Recursion
  * [x] Syntax: What if Haskell... but with a bit of Kotlin/Rust thrown in for good measure?
  * [x] Kotlin-esque string templating.
- * [ ] IORef-backed ML-like references (but only in IO!)
+ * [ ] IORef-backed ML-like references (only in IO!)
  * [x] Sequential blocks that can be bound to any monad.
  * [ ] Flexible binding of names in sequential blocks (do notation++)™.
  * [ ] Simple pattern matching.
  * [x] Flexible records -- because we're not cavemen.
- * [x] Record dot and universal function call syntax.
- * [ ] Reactive polymorphism.
+ * [x] Record dot and [Uniform Function Call Syntax](https://en.wikipedia.org/wiki/Uniform_Function_Call_Syntax).
+ * [ ] Functorial polymorphism (A generalizaton of [Array Programming Languages](https://en.wikipedia.org/wiki/Array_programming))
+ * [ ] Monadic polymorphism (Compare effect polymorphism in [koka](https://koka-lang.github.io/koka/doc/book.html#why-effects))
 
 # Examples
 
