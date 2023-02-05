@@ -37,7 +37,7 @@ Given sufficent time (and/or interested contributors!) I'll probably add optiona
  * [x] Higher-order functions
  * [x] Everything is an expression
  * [x] Recursion
- * [x] Syntax: What if Haskell... but with a bit of Kotlin/Rust thrown in for good measure?
+ * [x] What if Haskell... but with a Rust-like monadic syntax thrown in for good measure?
  * [x] Kotlin-esque string templating.
  * [ ] IORef-backed ML-like references (only in IO!)
  * [x] Sequential blocks that can be bound to any monad.
@@ -153,7 +153,7 @@ UI = Column {
     Row {
         Text "Click the button:";
         button <- Button ":)"
-    }
+    };
     
     when button.clicked {
         popupDialog "You clicked the button!"
@@ -167,9 +167,9 @@ is equivalent to the following:
 UI = Column {
     button <- Row {
         Text "Click the button:";
-        button <- Button ":)"
+        button <- Button ":)";
         return button
-    }
+    };
     
     -- Variables in nexted monadic blocks are automatically accessible in parent scopes
     when button.clicked {
