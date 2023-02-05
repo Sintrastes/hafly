@@ -45,10 +45,51 @@ Given sufficent time (and/or interested contributors!) I'll probably add optiona
 
 # Examples
 
+## Recursive Function Definitions
+
 ```haskell
 fact = \n -> if(n == 0) 1 
     else n * fact (n - 1)
 ```
+
+## Function Application Operator
+
+```haskell
+squared = \x -> x * x
+
+> squared $ squared 2.5
+39.0625
+```
+
+## Function Composition
+
+```haskell
+f = \x -> x + 2
+g = \x -> x * 5
+
+h  = g of f
+h' = f then g
+
+> h 1
+15
+
+> h' 1
+15
+```
+
+## Universal Function Call Syntax
+
+```haskell
+squared = \x -> x * x
+
+> 4.squared
+8
+
+> 2.5.squared.squared
+39.0625
+```
+
+## Scheduling Task
 
 ```haskell
 -- Interperted in a monad allowing for the scheduling of 
@@ -65,6 +106,8 @@ remindMe time timeToRemindAgain todo = schedule time {
     }
 }
 ```
+
+## User Interface
 
 ```haskell
 -- Interpreted in a "builder" monad for a UI.
