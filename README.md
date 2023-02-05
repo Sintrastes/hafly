@@ -40,7 +40,7 @@ Given sufficent time (and/or interested contributors!) I'll probably add optiona
  * [ ] Flexible binding of names in sequential blocks (do notation++)™.
  * [ ] Simple pattern matching.
  * [x] Flexible records -- because we're not cavemen.
- * [ ] Record dot and universal function call syntax.
+ * [x] Record dot and universal function call syntax.
  * [ ] Reactive polymorphism.
 
 # Examples
