@@ -83,7 +83,7 @@ h' = f then g
 15
 ```
 
-## Universal Function Call Syntax
+## Uniform Function Call Syntax
 
 ```haskell
 squared = \x -> x * x
