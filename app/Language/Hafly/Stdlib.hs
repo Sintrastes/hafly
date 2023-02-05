@@ -10,6 +10,7 @@ import Data.Proxy
 import Control.Monad (forM_)
 import Type.Reflection (SomeTypeRep(SomeTypeRep))
 import Data.Function ((&))
+import Control.Category ((>>>))
 
 base = InterpreterContext {
     exprDefs = fromList
@@ -37,7 +38,11 @@ base = InterpreterContext {
         [
           [
             -- "dot" operator for universal function call syntax.
-            InfixR $ Const ("." , toDyn ((&) @Dynamic @Dynamic))
+            InfixL $ Const ("." , toDyn ((&) @Dynamic @Dynamic))
+          ],
+          [
+            InfixL $ Const ("of", toDyn ((.) @Dynamic @Dynamic @Dynamic))
+          , InfixL $ Const ("then", toDyn ((>>>) @(->) @Dynamic @Dynamic @Dynamic))
           ],
           [
             InfixR $ Const ("*"  , toDyn ((*) @Int))
