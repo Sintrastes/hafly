@@ -33,6 +33,7 @@ Given sufficent time (and/or interested contributors!) I'll probably add optiona
 # Features / Progress
 
  * [x] Higher-order functions
+ * [x] Everything is an expression
  * [x] Recursion
  * [x] Syntax: What if Haskell... but with a bit of Kotlin/Rust thrown in for good measure?
  * [x] Kotlin-esque string templating.
