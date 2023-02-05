@@ -223,22 +223,6 @@ data DynamicLambda where
 fromDynLambda :: DynamicLambda -> Dynamic
 fromDynLambda (DynamicLambda tr f) = Dynamic tr $ f []
 
--- Here is an example of how to actually build up a dynamic with new args.
-
--- The issue is, I think we need to interpret the body before we can figure out the
--- type of the lambda this way -- and that might cause issues with laziness.
-
--- This is built from the bottom up, whereas in interpretLambda we're working
--- from the top-down. I'm not sure the bottom-up approach would be possible here
--- because of free variables.
-
--- Then again, it appears that variables are not actually bound until evaluated,
--- so maybe a bottom-up approach or something similar actually would work here.
-
--- We might need some type magic (e.x. typed vectors) to get this to work maybe?
-addDummyArg :: Dynamic -> Dynamic
-addDummyArg (Dynamic tr x) = Dynamic (Fun (typeRep @Dynamic) tr) (\_ -> x)
-
 -- TODO: Just a workaround for now to defer
 -- evaluation inside of lambdas
 fromRight (Right x) = x
