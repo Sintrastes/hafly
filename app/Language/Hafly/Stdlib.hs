@@ -11,12 +11,19 @@ import Control.Monad (forM_)
 import Type.Reflection (SomeTypeRep(SomeTypeRep))
 import Data.Function ((&))
 import Control.Category ((>>>))
+import Data.IORef
+import Control.Monad.Fix (fix)
 
 base = InterpreterContext {
     exprDefs = fromList
         [
+        -- Variables
+          ("var", toDyn $ newIORef @Dynamic)
+        , ("get", toDyn $ readIORef @Dynamic)
+        -- Imperative helpers
+        , ("loop", toDyn $ \(x :: IO Dynamic) -> fix $ \(r :: IO Dynamic) -> x >> r)
         -- Type introspection
-          ("type", toDyn dynTypeRep)
+        , ("type", toDyn dynTypeRep)
         -- Basic Console IO
         , ("printLn", toDyn putStrLn)
         , ("readLn" , toDyn getLine)
