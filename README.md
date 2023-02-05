@@ -146,6 +146,38 @@ entryForm = Column {
 }
 ```
 
+# Do Notation++
+
+```haskell
+UI = Column {
+    Row {
+        Text "Click the button:";
+        button <- Button ":)"
+    }
+    
+    when button.clicked {
+        popupDialog "You clicked the button!"
+    }
+}
+```
+
+is equivalent to the following:
+
+```haskell
+UI = Column {
+    button <- Row {
+        Text "Click the button:";
+        button <- Button ":)"
+        return button
+    }
+    
+    -- Variables in nexted monadic blocks are automatically accessible in parent scopes
+    when button.clicked {
+        popupDialog "You clicked the button!"
+    }
+}
+```
+
 How does it work?
 -----------------
 
