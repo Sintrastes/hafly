@@ -95,6 +95,19 @@ squared = \x -> x * x
 39.0625
 ```
 
+## ML-like References (Mutable Variables)
+
+```haskell
+main = {
+    x <- var 0;
+    printLn "The value of x is $x.";
+    printLn "Enter in a new value for x.";
+    newValue <- readLn then toInt;
+    x := newValue;
+    printLn "The value of x is now $x."
+}
+```
+
 ## Scheduling Task
 
 ```haskell
