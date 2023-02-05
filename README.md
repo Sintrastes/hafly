@@ -13,6 +13,8 @@ hafly (pronounced "half-lee") is a simple dynamic embeddable scripting language 
 
 See [hafly-web-repl](https://github.com/Sintrastes/hafly-web-repl) for a repo implementing an embeddable hafly REPL.
 
+Please note that hafly is still in pre-alpha, and the design, feature set, and syntax are by no means stable. 
+
 # Why?
 
 I wanted a simple, easy to learn scripting language that was easy to embed in pure Haskell projects (so it's easy to target, for instance, ghcjs as well as native targets) that still meshes well with Haskell idioms. (Simple expression language + a monadic block syntax that can be interpreted in an arbitrary monad? Hell yeah!) As far as I could tell, such a thing did not exist -- so I made one!
