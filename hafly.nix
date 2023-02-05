@@ -1,5 +1,5 @@
 { mkDerivation, base, hashmap, haskeline, lib, megaparsec, multimap
-, parser-combinators, text
+, parser-combinators, text, tasty, tasty-hunit
 }:
 mkDerivation {
   pname = "hafly";
