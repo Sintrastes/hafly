@@ -15,7 +15,7 @@ base = InterpreterContext {
         [
         -- Type introspection
           ("type", toDyn dynTypeRep)
-        -- IO Functions
+        -- Basic Console IO
         , ("printLn", toDyn putStrLn)
         , ("readLn" , toDyn getLine)
         -- Typeclass instances

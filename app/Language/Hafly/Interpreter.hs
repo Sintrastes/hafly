@@ -3,7 +3,7 @@
 
 module Language.Hafly.Interpreter where
 import Data.Dynamic
-import Data.Data (Proxy)
+import Data.Data (Proxy, eqT)
 import Language.Hafly.Ast hiding (App, Const)
 import qualified Language.Hafly.Ast as Ast
 import Type.Reflection hiding (App)
@@ -20,8 +20,9 @@ import Data.Kind (Type)
 import Control.Monad
 import Control.Arrow
 import Data.List.NonEmpty (NonEmpty ((:|)))
+import qualified Data.List.NonEmpty as NonEmpty
 import qualified Data.Text as T
-import Control.Monad.Combinators.Expr
+import Control.Monad.Combinators.Expr ( Operator(..) )
 import Text.Megaparsec hiding (empty)
 import Data.Void
 import Control.Applicative hiding (empty)
@@ -196,16 +197,47 @@ dynArgTypeRep (SomeTypeRep x) = do
 interpretLambda :: InterpreterContext -> [String] -> Ast -> Either TypeError Dynamic
 interpretLambda ctx@InterpreterContext {..} [] body =
     pure $ toDyn $ fromRight $ interpret ctx body
-interpretLambda ctx@InterpreterContext {..} (x:xs) body =
-    interpretMultiArgLambda ctx body (x :| xs)
+interpretLambda ctx@InterpreterContext {..} (v:vs) body = pure $ fromDynLambda $
+    interpretMultiArgLambdaRec ctx 
+      (DynamicLambda (Fun (typeRep @Dynamic) (typeRep @Dynamic)) $ \vars x -> 
+          fromRight $ interpret ctx $ substAll ((v, Ast.Const x) : vars) body) 
+      (reverse vs)
 
 interpretMultiArgLambda :: InterpreterContext -> Ast -> NonEmpty String -> Either TypeError Dynamic
-interpretMultiArgLambda ctx@InterpreterContext {..} body = \case
+interpretMultiArgLambda ctx@InterpreterContext{..} body = \case
     (v :| []) ->
         pure $ toDyn $ \x -> fromRight $ interpret ctx $ subst v (Ast.Const x) body
-    (v :| v' : vs) ->
-        pure $ toDyn $ \x -> fromRight $ interpretMultiArgLambda ctx
-            (subst v (Ast.Const x) body) (v' :| vs)
+    (v :| v' : vs) -> pure $ toDyn $ \x -> fromRight $ interpretMultiArgLambda ctx
+        (subst v (Ast.Const x) body) (v' :| vs)
+
+interpretMultiArgLambdaRec :: InterpreterContext -> DynamicLambda -> [String] -> DynamicLambda
+interpretMultiArgLambdaRec ctx@InterpreterContext{..} body = \case
+    [] -> body
+    (v : vs) -> interpretMultiArgLambdaRec ctx (case body of
+        DynamicLambda tr f -> DynamicLambda (Fun (typeRep @Dynamic) tr) $ \vars x -> 
+            f $ (v, Ast.Const x) : vars) vs
+
+data DynamicLambda where
+    DynamicLambda :: forall a. TypeRep a -> ([(String, Ast)] -> a) -> DynamicLambda
+
+fromDynLambda :: DynamicLambda -> Dynamic
+fromDynLambda (DynamicLambda tr f) = Dynamic tr $ f []
+
+-- Here is an example of how to actually build up a dynamic with new args.
+
+-- The issue is, I think we need to interpret the body before we can figure out the
+-- type of the lambda this way -- and that might cause issues with laziness.
+
+-- This is built from the bottom up, whereas in interpretLambda we're working
+-- from the top-down. I'm not sure the bottom-up approach would be possible here
+-- because of free variables.
+
+-- Then again, it appears that variables are not actually bound until evaluated,
+-- so maybe a bottom-up approach or something similar actually would work here.
+
+-- We might need some type magic (e.x. typed vectors) to get this to work maybe?
+addDummyArg :: Dynamic -> Dynamic
+addDummyArg (Dynamic tr x) = Dynamic (Fun (typeRep @Dynamic) tr) (\_ -> x)
 
 -- TODO: Just a workaround for now to defer
 -- evaluation inside of lambdas
