@@ -176,7 +176,9 @@ stringLitRec opDefs = do
             pure $ StringSeq [quotedChar] : rest
         _   -> do
             char '"'
-            return [StringSeq x]
+            return $ if not (null x) 
+                then [StringSeq x]
+                else []
 
 quotedVar :: [[Operator Parser Ast]] -> Parser StringSegment
 quotedVar opDefs = do
