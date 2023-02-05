@@ -11,7 +11,7 @@ mkDerivation {
     base hashmap megaparsec multimap parser-combinators text
   ];
   executableHaskellDepends = [
-    base hashmap haskeline megaparsec multimap parser-combinators text tasty tasy-hunit
+    base hashmap haskeline megaparsec multimap parser-combinators text tasty tasty-hunit
   ];
   license = "unknown";
   hydraPlatforms = lib.platforms.none;
