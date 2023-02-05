@@ -22,7 +22,7 @@ Comparison with other projects:
   * [hslua](https://hackage.haskell.org/package/hslua): Easy for beginners, embeddable, yet is not pure haskell (hard to use in GHCJS).
   * [codeworld](https://github.com/google/codeworld) haskell: Possibly another good option in this space -- an educational variant of Haskell that can be run in GHCJS.
   * [hint](https://github.com/haskell-hint/hint): Very nice -- yet pretty heavyweight, and Haskell itself is not nescesarialy the easiest for beginners.
-  * Various lisp/scheme implementations: Maybe not the easiest to embed. Arguably a bit of a tricky syntax for beginners.
+  * Various lisp/scheme implementations: Maybe not the easiest to embed. Arguably not the most intuitive syntax for beginners. Too dissimilar to Haskell.
 
 # Why dynamically typed?
 
