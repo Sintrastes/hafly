@@ -22,7 +22,7 @@ Comparison with other projects:
   * [hslua](https://hackage.haskell.org/package/hslua): Easy for beginners, embeddable, yet is not pure haskell (hard to use in GHCJS).
   * [codeworld](https://github.com/google/codeworld) haskell: Possibly another good option in this space -- an educational variant of Haskell that can be run in GHCJS.
   * [hint](https://github.com/haskell-hint/hint): Very nice -- yet pretty heavyweight, and Haskell itself is not nescesarialy the easiest for beginners.
-  * Various lisp/scheme implementations: Maybe not the easiest to embed. Arguably a bit of a tricky syntax for beginners.
+  * Various lisp/scheme implementations: Maybe not the easiest to embed. Arguably not the most intuitive syntax for beginners. Too dissimilar to Haskell.
 
 # Why dynamically typed?
 
@@ -30,26 +30,27 @@ I wanted something quick and no-nonsense (implementation-wise), and easy to exte
 
 Given sufficent time (and/or interested contributors!) I'll probably add optional static type checking capabilities in the future.
 
-# Features
+# Features / Progress
 
- * Syntax: What if Haskell... but with a bit of Kotlin thrown in for good measure?
- * Kotlin-esque string templating.
- * Sequential blocks that can be bound to any monad.
- * Flexible binding of names in sequential blocks (do notation++)™.
- * Simple pattern matching.
- * Flexible records -- because we're not cavemen.
- * Record dot and universal function call syntax.
- * Strictly evaluated.
-
+ * [x] Higher-order functions
+ * [x] Recursion
+ * [x] Syntax: What if Haskell... but with a bit of Kotlin/Rust thrown in for good measure?
+ * [x] Kotlin-esque string templating.
+ * [x] Sequential blocks that can be bound to any monad.
+ * [ ] Flexible binding of names in sequential blocks (do notation++)™.
+ * [ ] Simple pattern matching.
+ * [x] Flexible records -- because we're not cavemen.
+ * [ ] Record dot and universal function call syntax.
+ * [ ] Reactive polymorphism.
 
 # Examples
 
-```
+```haskell
 fact = \n -> if(n == 0) 1 
     else n * fact (n - 1)
 ```
 
-```
+```haskell
 -- Interperted in a monad allowing for the scheduling of 
 -- actions in IO.
 remindMe time timeToRemindAgain todo = schedule time {
@@ -65,7 +66,7 @@ remindMe time timeToRemindAgain todo = schedule time {
 }
 ```
 
-```
+```haskell
 -- Interpreted in a "builder" monad for a UI.
 -- builds up a record of the form:
 --    { name: "bob", age: 42 }
