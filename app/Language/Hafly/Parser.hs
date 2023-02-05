@@ -202,7 +202,7 @@ block opDefs = do
 
 sequenceExpr :: [[Operator Parser Ast]] -> Parser SequenceExpr
 sequenceExpr opDefs = try (bindExpr opDefs)
-    <|> Expr <$> expr opDefs
+    <|> Expr <$> opExpr opDefs
 
 bindExpr :: [[Operator Parser Ast]] -> Parser SequenceExpr
 bindExpr opDefs = do

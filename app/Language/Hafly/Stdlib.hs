@@ -50,6 +50,7 @@ base = InterpreterContext {
           [
             InfixL $ Const ("of", toDyn ((.) @Dynamic @Dynamic @Dynamic))
           , InfixL $ Const ("then", toDyn ((>>>) @(->) @Dynamic @Dynamic @Dynamic))
+          , InfixL $ Const (":=", toDyn (writeIORef @Dynamic))
           ],
           [
             InfixR $ Const ("*"  , toDyn ((*) @Int))
