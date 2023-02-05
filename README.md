@@ -123,12 +123,12 @@ entryForm = Column {
     Row {
         Text "Name: ";
         nameEntry <- TextEntry
-            .bind(name)
+            .bind name
     };
     Row {
         Text "Age: ";
         ageEntry <- TextEntry
-            .bind(age)
+            .bind age
     }
 }
 ```
