@@ -42,6 +42,7 @@ Given sufficent time (and/or interested contributors!) I'll probably add optiona
  * [ ] IORef-backed ML-like references (only in IO!)
  * [x] Sequential blocks that can be bound to any monad.
  * [ ] Flexible binding of names in sequential blocks (do notation++)™.
+ * [ ] Symbols and polymorphic variants.
  * [ ] Simple pattern matching.
  * [x] Flexible records -- because we're not cavemen.
  * [x] Record dot and [Uniform Function Call Syntax](https://en.wikipedia.org/wiki/Uniform_Function_Call_Syntax).
