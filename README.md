@@ -13,6 +13,8 @@ hafly (pronounced "half-lee") is a simple dynamic embeddable scripting language 
 
 See [hafly-web-repl](https://github.com/Sintrastes/hafly-web-repl) for a repo implementing an embeddable hafly REPL.
 
+Please note that hafly is still in pre-alpha, and the design, feature set, and syntax are by no means stable. 
+
 # Why?
 
 I wanted a simple, easy to learn scripting language that was easy to embed in pure Haskell projects (so it's easy to target, for instance, ghcjs as well as native targets) that still meshes well with Haskell idioms. (Simple expression language + a monadic block syntax that can be interpreted in an arbitrary monad? Hell yeah!) As far as I could tell, such a thing did not exist -- so I made one!
@@ -37,15 +39,17 @@ Given sufficent time (and/or interested contributors!) I'll probably add optiona
  * [x] Higher-order functions
  * [x] Everything is an expression
  * [x] Recursion
- * [x] Syntax: What if Haskell... but with a bit of Kotlin/Rust thrown in for good measure?
+ * [x] What if Haskell... but with a Rust-like monadic syntax thrown in for good measure? (But I might add whitespace sensitivity later, IDK)
  * [x] Kotlin-esque string templating.
- * [ ] IORef-backed ML-like references (but only in IO!)
+ * [ ] IORef-backed ML-like references (only in IO!)
  * [x] Sequential blocks that can be bound to any monad.
  * [ ] Flexible binding of names in sequential blocks (do notation++)™.
+ * [ ] Symbols and polymorphic variants.
  * [ ] Simple pattern matching.
  * [x] Flexible records -- because we're not cavemen.
- * [x] Record dot and universal function call syntax.
- * [ ] Reactive polymorphism.
+ * [x] Record dot and [Uniform Function Call Syntax](https://en.wikipedia.org/wiki/Uniform_Function_Call_Syntax).
+ * [ ] Functorial polymorphism (A generalizaton of [Array Programming Languages](https://en.wikipedia.org/wiki/Array_programming))
+ * [ ] Monadic polymorphism (Compare effect polymorphism in [koka](https://koka-lang.github.io/koka/doc/book.html#why-effects))
 
 # Examples
 
@@ -81,7 +85,7 @@ h' = f then g
 15
 ```
 
-## Universal Function Call Syntax
+## Uniform Function Call Syntax
 
 ```haskell
 squared = \x -> x * x
@@ -91,6 +95,19 @@ squared = \x -> x * x
 
 > 2.5.squared.squared
 39.0625
+```
+
+## ML-like References (Mutable Variables)
+
+```haskell
+main = {
+    x <- var 0;
+    printLn "The value of x is $x.";
+    printLn "Enter in a new value for x.";
+    newValue <- readLn then toInt;
+    x := newValue;
+    printLn "The value of x is now $x."
+}
 ```
 
 ## Scheduling Task
@@ -121,13 +138,82 @@ entryForm = Column {
     Row {
         Text "Name: ";
         nameEntry <- TextEntry
-            .bind(name)
+            .bind name
     };
     Row {
         Text "Age: ";
         ageEntry <- TextEntry
-            .bind(age)
+            .bind age
     }
+}
+```
+
+# Do Notation++ (WIP)
+
+```haskell
+UI = Column {
+    Row {
+        Text "Click the button:";
+        button <- Button ":)"
+    };
+    
+    when button.clicked {
+        popupDialog "You clicked the button!"
+    }
+}
+```
+
+is equivalent to the following:
+
+```haskell
+UI = Column {
+    button <- Row {
+        Text "Click the button:";
+        button <- Button ":)";
+        return button
+    };
+    
+    -- Variables in nexted monadic blocks are automatically accessible in parent scopes
+    when button.clicked {
+        popupDialog "You clicked the button!"
+    }
+}
+```
+
+## Reactive Polymorphism (WIP)
+
+Let's say you have a type of reactive state variables `State a` which is a functor (in Hafly terms, we've defined a `map` operator for it via multiple dispatch), and a `state : a -> m (State a)` to introduce them in some monad `m`. Hafly can automatically `map` and `bind` operations over `State`s without extra ceremony:
+
+```haskell
+UI = Column {
+    count <- state 0
+    
+    btn <- Button "Click me!"
+    
+    when btn.clicked {
+        count := count + 1
+    }
+    
+    Text "You clicked me $count times!"
+}
+```
+
+Compare with the "manual" version, where we have to apply `map` rather than directly operating over the `State`:
+
+```haskell
+UI = Column {
+    count <- state 0
+    
+    btn <- Button "Click me!"
+    
+    when btn.clicked {
+        count := count + 1
+    }
+    
+    btnText = count.map $ \num ->
+        "You clicked me $num times!"
+    
+    Text btnText
 }
 ```
 
