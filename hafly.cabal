@@ -47,6 +47,22 @@ library
       , ExistentialQuantification
       , KindSignatures
 
+test-suite main-tests
+  type: exitcode-stdio-1.0
+  main-is: Tests.hs
+  other-modules:
+      Paths_hafly
+  hs-source-dirs:
+      tests
+  build-depends:
+      base
+    , hafly
+    , tasty
+    , tasty-hunit
+  extensions:
+      TemplateHaskell, QuasiQuotes
+  default-language: Haskell2010
+
 executable hafly
     main-is:          app/Main.hs
     build-depends:    base
