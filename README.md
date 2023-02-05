@@ -33,6 +33,7 @@ Given sufficent time (and/or interested contributors!) I'll probably add optiona
 # Features / Progress
 
  * [x] Higher-order functions
+ * [x] Everything is an expression
  * [x] Recursion
  * [x] Syntax: What if Haskell... but with a bit of Kotlin/Rust thrown in for good measure?
  * [x] Kotlin-esque string templating.
@@ -112,7 +113,7 @@ remindMe time timeToRemindAgain todo = schedule time {
 ```haskell
 -- Interpreted in a "builder" monad for a UI.
 -- builds up a record of the form:
---    { name: "bob", age: 42 }
+--    [ name: "bob", age: 42 ]
 entryForm = Column {
     Row {
         Text "Name: ";
