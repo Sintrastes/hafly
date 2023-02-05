@@ -20,10 +20,22 @@ data Ast =
   | Const Dynamic
         deriving(Show)
 
+instance Eq Ast where
+    Var x == Var y = x == y
+    App f x == App f' x' = f == f' && x == x'
+    Lambda xs x == Lambda xs' x' = xs == xs && x == x'
+    Sequence x == Sequence y = x == y
+    Record x == Record y = x == y
+    List xs == List ys = xs == ys
+    String xs == String ys = xs == ys
+    Cond x y z == Cond x' y' z' = x == x' && y == y' && z == z'
+    -- Can't compare constants for equality.
+    Const _ == Const _ = False
+
 data StringSegment = 
     StringSeq String 
   | QuotedExpr Ast
-    deriving(Show)
+    deriving(Eq, Show)
 
 subst :: String -> Ast -> Ast -> Ast
 subst var x expr = case expr of
@@ -68,11 +80,11 @@ substSeqExpr var x = \case
       subst var x ast
 
 data SequenceAst = SequenceAst [SequenceExpr]
-    deriving(Show)
+    deriving(Eq, Show)
 
 data SequenceExpr =
       Expr Ast
     | BindExpr String Ast
-        deriving(Show)
+        deriving(Eq, Show)
 
 type TypeError = String
