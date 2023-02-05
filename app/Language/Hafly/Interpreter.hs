@@ -260,7 +260,7 @@ interpretMonadicSequence ctx@InterpreterContext{..} m@DynamicMonad{..} bound = \
         pure $ dynBind mx (\_ -> 
             fromRight $ interpretMonadicSequence ctx m bound xs)
     ((BindExpr x y):xs) -> do
-        y' <- interpret ctx y
+        y' <- interpret ctx (substAll bound y)
         my <- maybe (Left "Expression was not of the correct monadic type") Right $ toDynM y'
         pure $ dynBind my (\r -> 
             fromRight $ interpretMonadicSequence ctx m (bound ++ [(x, Ast.Const r)]) xs)
