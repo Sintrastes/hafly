@@ -146,7 +146,7 @@ entryForm = Column {
 }
 ```
 
-# Do Notation++
+# Do Notation++ (WIP)
 
 ```haskell
 UI = Column {
@@ -175,6 +175,43 @@ UI = Column {
     when button.clicked {
         popupDialog "You clicked the button!"
     }
+}
+```
+
+## Reactive Polymorphism (WIP)
+
+Let's say you have a type of reactive state variables `State a` which is a functor (in Hafly terms, we've defined a `map` operator for it via multiple dispatch), and a `state : a -> m (State a)` to introduce them in some monad `m`. Hafly can automatically `map` and `bind` operations over `State`s without extra ceremony:
+
+```haskell
+UI = Column {
+    count <- state 0
+    
+    btn <- Button "Click me!"
+    
+    when btn.clicked {
+        count := count + 1
+    }
+    
+    Text "You clicked me $count times!"
+}
+```
+
+Compare with the "manual" version, where we have to apply `map` rather than directly operating over the `State`:
+
+```haskell
+UI = Column {
+    count <- state 0
+    
+    btn <- Button "Click me!"
+    
+    when btn.clicked {
+        count := count + 1
+    }
+    
+    btnText = count.map $ \num ->
+        "You clicked me $num times!"
+    
+    Text btnText
 }
 ```
 
