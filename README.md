@@ -113,7 +113,7 @@ remindMe time timeToRemindAgain todo = schedule time {
 ```haskell
 -- Interpreted in a "builder" monad for a UI.
 -- builds up a record of the form:
---    { name: "bob", age: 42 }
+--    [ name: "bob", age: 42 ]
 entryForm = Column {
     Row {
         Text "Name: ";
