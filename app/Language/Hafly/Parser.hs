@@ -164,8 +164,7 @@ stringLitRec opDefs = do
         '$' -> do
             -- Try to parse one of the literals
             v <- try (quotedVar opDefs)  <|> 
-                 try (quotedExpr opDefs) <|> 
-                 quotedBracketVar opDefs
+                   quotedExpr opDefs
             -- Continue parsing the rest of the string literal.
             rest <- stringLitRec opDefs
             pure $ StringSeq x : v : rest
@@ -183,21 +182,13 @@ quotedVar :: [[Operator Parser Ast]] -> Parser StringSegment
 quotedVar opDefs = do
     char '$'
     x <- identifier
-    pure $ QuotedVar x
-
-quotedBracketVar :: [[Operator Parser Ast]] -> Parser StringSegment
-quotedBracketVar opDefs = do
-    char '$'
-    char '{'
-    x <- identifier
-    char '}'
-    pure $ QuotedVar x
+    pure $ QuotedExpr $ Var x
 
 quotedExpr :: [[Operator Parser Ast]] -> Parser StringSegment
 quotedExpr opDefs = do
     char '$'
     char '{'
-    e <- expr opDefs
+    e <- opExpr opDefs
     char '}'
     pure $ QuotedExpr e
 

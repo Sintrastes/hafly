@@ -150,10 +150,6 @@ interpret ctx@InterpreterContext {..} = \case
 
 interpretStringLit :: InterpreterContext -> [StringSegment] -> Either TypeError Dynamic
 interpretStringLit ctx@InterpreterContext{..} [] = pure $ toDyn @String ""
-interpretStringLit ctx@InterpreterContext{..} (QuotedVar x:xs) = do
-    rest <- interpretStringLit ctx xs
-    interpret ctx $ 
-        Ast.App (Ast.App (Ast.Const $ toDyn ((++) @Char)) (Var x)) (Ast.Const rest)
 interpretStringLit ctx@InterpreterContext{..} (StringSeq x:xs) = do
     rest <- interpretStringLit ctx xs
     interpret ctx $ 

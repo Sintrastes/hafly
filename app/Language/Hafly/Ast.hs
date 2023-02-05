@@ -21,8 +21,7 @@ data Ast =
         deriving(Show)
 
 data StringSegment = 
-    QuotedVar String 
-  | StringSeq String 
+    StringSeq String 
   | QuotedExpr Ast
     deriving(Show)
 
@@ -52,7 +51,6 @@ substString v a [] = []
 substString v a (x:xs) = substStringSegment v a x : substString v a xs
 
 substStringSegment :: String -> Ast -> StringSegment -> StringSegment
-substStringSegment x a (QuotedVar y) | x == y = QuotedExpr a
 substStringSegment x a (QuotedExpr y) = QuotedExpr $ subst x a y
 substStringSegment x a y = y
 
