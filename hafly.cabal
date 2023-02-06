@@ -63,20 +63,20 @@ test-suite main-tests
       TemplateHaskell, QuasiQuotes
   default-language: Haskell2010
 
-executable hafly
-    main-is:          app/Main.hs
-    build-depends:    base
-                    , hafly
-                    , multimap
-                    , text
-                    , haskeline
-                    , parser-combinators
-                    , megaparsec
-                    , hashmap
-    default-extensions:
-        LambdaCase
-      , TypeApplications
-      , ScopedTypeVariables
-      , RecordWildCards
-      , GADTs
-    default-language: Haskell2010
+-- executable hafly
+--     main-is:          app/Main.hs
+--     build-depends:    base
+--                     , hafly
+--                     , multimap
+--                     , text
+--                     , haskeline
+--                     , parser-combinators
+--                     , megaparsec
+--                     , hashmap
+--     default-extensions:
+--         LambdaCase
+--       , TypeApplications
+--       , ScopedTypeVariables
+--       , RecordWildCards
+--       , GADTs
+--     default-language: Haskell2010
