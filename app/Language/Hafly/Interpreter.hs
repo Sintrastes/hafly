@@ -94,7 +94,6 @@ traverseExprs :: MultiMap String (MultiMap String Dynamic -> Dynamic) -> MultiMa
 traverseExprs exprs = mapWithKey (\k x -> 
     (\f -> f $ traverseExprs $ 
         fromMap $ 
-        -- filterWithKey (\k' _ -> k /= k') $ 
         toMap exprs) x
     ) exprs
 
@@ -154,7 +153,7 @@ interpret ctx@InterpreterContext {..} = \case
     Sequence seq ->
         interpretSequence ctx seq
     Lambda vars exp ->
-        interpretLambda ctx vars exp
+        interpretLambda ctx (reverse vars) exp
     Record r -> toDyn <$>
         sequence (interpret ctx <$> r)
     List xs -> toDyn <$>
@@ -215,7 +214,7 @@ interpretLambda ctx@InterpreterContext {..} (v:vs) body = pure $ fromDynLambda $
     interpretMultiArgLambdaRec ctx 
       (DynamicLambda (Fun (typeRep @Dynamic) (typeRep @Dynamic)) $ \vars x -> 
           fromRight $ interpret ctx $ substAll ((v, Ast.Const x) : vars) body) 
-      (reverse vs)
+      vs
 
 interpretMultiArgLambda :: InterpreterContext -> Ast -> NonEmpty String -> Either TypeError Dynamic
 interpretMultiArgLambda ctx@InterpreterContext{..} body = \case
