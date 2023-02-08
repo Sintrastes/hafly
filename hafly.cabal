@@ -34,6 +34,7 @@ library
     build-depends:    
         base 
       , multimap
+      , containers
       , hashmap
       , text
       , megaparsec

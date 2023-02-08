@@ -31,12 +31,22 @@ import Data.List hiding (insert, lookup)
 import Control.Monad.Fix
 import Control.Exception hiding (TypeError)
 import Debug.Trace
+import Data.Functor
+import Data.Map (filterWithKey)
 
 data InterpreterContext = InterpreterContext {
-    exprDefs     :: MultiMap String Dynamic,
+    exprDefs     :: MultiMap String (MultiMap String Dynamic -> Dynamic),
     operatorDefs :: [[Operator (Const (String, Dynamic)) Void]],
     monadDefs    :: [SomeDynamicMonad]
 }
+
+-- newtype ExprDefs = ExprDefs (MultiMap String (ExprDefs -> Dynamic))
+
+--- getDefs :: ExprDefs -> MultiMap String (ExprDefs -> Dynamic)
+-- getDefs (ExprDefs x) = x
+
+-- recurseDefs :: ExprDefs -> MultiMap String Dynamic
+-- recurseDefs x = fromMap $ (\y -> ((\f -> f x) <$>) <$> y) $ toMap (getDefs x)
 
 instance Semigroup InterpreterContext where
     (<>) :: InterpreterContext -> InterpreterContext -> InterpreterContext
@@ -80,6 +90,14 @@ data DynamicMonad m = DynamicMonad {
 
 data SomeDynamicMonad = forall m. (Monad m, Typeable m) => SomeDynamicMonad (DynamicMonad m)
 
+traverseExprs :: MultiMap String (MultiMap String Dynamic -> Dynamic) -> MultiMap String Dynamic
+traverseExprs exprs = mapWithKey (\k x -> 
+    (\f -> f $ traverseExprs $ 
+        fromMap $ 
+        -- filterWithKey (\k' _ -> k /= k') $ 
+        toMap exprs) x
+    ) exprs
+
 -- Equivalent to >>
 dynSeq :: DynamicMonad m -> m Dynamic -> m Dynamic -> m Dynamic
 dynSeq m x y = dynBind m x (const y)
@@ -99,7 +117,7 @@ bindDyn = (>>=)
 
 addDef :: InterpreterContext -> String -> Dynamic -> InterpreterContext
 addDef ctx name def = ctx {
-    exprDefs = fromMap $ toMap (exprDefs ctx) <> toMap (insert name def empty)
+    exprDefs = fromMap $ toMap (exprDefs ctx) <> toMap (insert name (\_ -> def) empty)
 }
 
 extractSpecs :: Operator (Const a) b -> a
@@ -119,7 +137,7 @@ interpret :: InterpreterContext -> Ast -> Either TypeError Dynamic
 interpret ctx@InterpreterContext {..} = \case
     Var x  -> dispatched x $
         lookup x $ fromMap (
-            toMap exprDefs <>
+            toMap (traverseExprs exprDefs) <>
             toMap (fromList (extractSpecs <$> join operatorDefs)))
     Ast.Const x -> pure x
     Ast.App f' x' -> do
@@ -299,7 +317,7 @@ flattenDyn dyn@(Dynamic tr x) = case testEquality tr (typeRep @Dynamic) of
 
 tryShow :: InterpreterContext -> Dynamic -> IO () -> IO ()
 tryShow ctx@InterpreterContext {..} x alt = catch (do
-    case toMaybe $ dispatched "show" $ lookup "show" exprDefs of
+    case toMaybe $ dispatched "show" $ lookup "show" (traverseExprs exprDefs) of
       Nothing -> alt
       Just showF -> do
         -- Need to guard against excepions for now as

@@ -2,8 +2,8 @@
 module Language.Hafly.Stdlib where
 import Language.Hafly.Interpreter
 import Data.Dynamic
-import Data.HashMap hiding(fromList)
-import Data.MultiMap (fromList)
+import Data.HashMap hiding(lookup, fromList)
+import Data.MultiMap (fromList, MultiMap, fromMap, toMap, lookup)
 import Control.Monad.Combinators.Expr
 import Control.Applicative
 import Data.Proxy
@@ -13,33 +13,35 @@ import Data.Function ((&))
 import Control.Category ((>>>))
 import Data.IORef
 import Control.Monad.Fix (fix)
+import Prelude hiding (lookup)
+import Data.List (intercalate)
 
 base = InterpreterContext {
     exprDefs = fromList
         [
         -- Variables
-          ("var", toDyn $ newIORef @Dynamic)
-        , ("get", toDyn $ readIORef @Dynamic)
+          ("var", \_ -> toDyn $ newIORef @Dynamic)
+        , ("get", \_ -> toDyn $ readIORef @Dynamic)
         -- Imperative helpers
-        , ("loop", toDyn $ \(x :: IO Dynamic) -> fix $ \(r :: IO Dynamic) -> x >> r)
+        , ("loop", \_ -> toDyn $ \(x :: IO Dynamic) -> fix $ \(r :: IO Dynamic) -> x >> r)
         -- Type introspection
-        , ("type", toDyn dynTypeRep)
+        , ("type", \_ -> toDyn dynTypeRep)
         -- Basic Console IO
-        , ("printLn", toDyn putStrLn)
-        , ("readLn" , toDyn getLine)
+        , ("printLn", \_ -> toDyn putStrLn)
+        , ("readLn" , \_ -> toDyn getLine)
         -- Typeclass instances
-        , ("show"   , toDyn (show @SomeTypeRep))
-        , ("show"   , toDyn (show @Int))
-        , ("show"   , toDyn (show @String))
-        , ("show"   , toDyn (show @Double))
-        , ("show"   , toDyn (show @Bool))
-        , ("show"   , toDyn (show @[Dynamic]))
-        , ("show"   , toDyn (show @(Map String Dynamic)))
+        , ("show"   , \_ -> toDyn (show @SomeTypeRep))
+        , ("show"   , \_ -> toDyn (show @Int))
+        , ("show"   , \_ -> toDyn (show @String))
+        , ("show"   , \_ -> toDyn (show @Double))
+        , ("show"   , \_ -> toDyn (show @Bool))
+        , ("show"   , \defs -> toDyn $ showListDyn defs)
+        , ("show"   , \_ -> toDyn (show @(Map String Dynamic)))
         -- Higher order functions
-        , ("forEach", toDyn forEachList)
-        , ("map"    , toDyn (Prelude.map @Dynamic @Dynamic))
-        , ("filter" , toDyn (Prelude.filter @Dynamic))
-        , ("foldr"  , toDyn (Prelude.foldr @[] @Dynamic @Dynamic))
+        , ("forEach", \_ -> toDyn forEachList)
+        , ("map"    , \_ -> toDyn (Prelude.map @Dynamic @Dynamic))
+        , ("filter" , \_ -> toDyn (Prelude.filter @Dynamic))
+        , ("foldr"  , \_ -> toDyn (Prelude.foldr @[] @Dynamic @Dynamic))
         ]
   , operatorDefs =
         [
@@ -76,13 +78,19 @@ base = InterpreterContext {
             InfixN $ Const ("==", toDyn ((==) @Bool))
           ]
         ]
-  , monadDefs = 
+  , monadDefs =
         [
           fromMonad $ Proxy @IO
         ]
 }
 
+showListDyn :: MultiMap String Dynamic -> [Dynamic] -> String
+showListDyn defs xs = showStringList $
+  (\x -> fromDyn (flattenDyn $ fromRight $ flexibleDynApp (singlyDispatched (lookup "show" defs)) x) "<DYN>") <$> xs
+
+showStringList xs = "[" ++ intercalate ", " xs ++ "]"
+
 forEachList :: [Dynamic] -> (Dynamic -> Dynamic) -> IO ()
 forEachList xs f = forM_ xs $ \x -> do
-  maybe (error "Function did not have expected IO result") id $ 
+  maybe (error "Function did not have expected IO result") id $
     toDynM (f x)
