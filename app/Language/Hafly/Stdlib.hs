@@ -40,7 +40,7 @@ base = InterpreterContext {
         -- Higher order functions
         , ("forEach", \_ -> toDyn forEachList)
         , ("map"    , \_ -> toDyn (Prelude.map @Dynamic @Dynamic))
-        , ("filter" , \_ -> toDyn (Prelude.filter @Dynamic))
+        , ("filter" , \_ -> toDyn dynFilter)
         , ("foldr"  , \_ -> toDyn (Prelude.foldr @[] @Dynamic @Dynamic))
         ]
   , operatorDefs =
@@ -94,3 +94,6 @@ forEachList :: [Dynamic] -> (Dynamic -> Dynamic) -> IO ()
 forEachList xs f = forM_ xs $ \x -> do
   maybe (error "Function did not have expected IO result") id $
     toDynM (f x)
+
+dynFilter :: (Dynamic -> Dynamic) -> [Dynamic] -> [Dynamic]
+dynFilter f xs = Prelude.filter (\x -> fromDyn (f x) (error "Tried calling filter with function not returning boolean")) xs
