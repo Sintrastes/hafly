@@ -45,7 +45,7 @@ base = InterpreterContext {
         [
           [
             -- "dot" operator for universal function call syntax.
-            InfixL $ Const ("." , toDyn ((&) @Dynamic @Dynamic))
+            InfixL $ Const ("." , toDyn ((\x y -> flexibleDynApply y x)))
           ],
           [
             InfixL $ Const ("of", toDyn ((.) @Dynamic @Dynamic @Dynamic))
