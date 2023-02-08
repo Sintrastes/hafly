@@ -76,7 +76,10 @@ base = InterpreterContext {
             InfixN $ Const ("==", toDyn ((==) @Bool))
           ]
         ]
-  , monadDefs = [fromMonad $ Proxy @IO]
+  , monadDefs = 
+        [
+          fromMonad $ Proxy @IO
+        ]
 }
 
 forEachList :: [Dynamic] -> (Dynamic -> Dynamic) -> IO ()
