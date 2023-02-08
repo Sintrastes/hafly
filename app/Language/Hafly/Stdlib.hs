@@ -57,6 +57,7 @@ base = InterpreterContext {
           , InfixR $ Const ("*"  , toDyn ((*) @Double))
           , InfixR $ Const ("/"  , toDyn (div @Int))
           , InfixR $ Const ("/"  , toDyn ((/) @Double))
+          , InfixR $ Const ("mod", toDyn (mod @Int))
           , InfixR $ Const ("and", toDyn (&&))
           , InfixR $ Const ("or" , toDyn (||))
           ],
