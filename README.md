@@ -11,7 +11,7 @@
 
 hafly (pronounced "half-lee") is a simple dynamic embeddable scripting language in Haskell.
 
-See [hafly-web-repl](https://github.com/Sintrastes/hafly-web-repl) for a repo implementing an embeddable hafly REPL.
+You can try it out on the [web repl](https://sintrastes.github.io/demos/hafly_repl/), which is itself a Haskell webapp implemented with [Reflex](https://reflex-frp.org/). (The implementation can be found [here](https://github.com/Sintrastes/hafly-web-repl).)
 
 Please note that hafly is still in pre-alpha, and the design, feature set, and syntax are by no means stable. 
 

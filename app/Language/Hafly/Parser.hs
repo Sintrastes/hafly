@@ -68,7 +68,7 @@ rightSquareBracket = token (char ']')
 
 identifier = do
     x <- token (some alphaNumChar)
-    if x `elem` ["if", "else", "and", "or", "True", "False"]
+    if x `elem` ["if", "else", "and", "or", "mod", "True", "False"]
         then fail "Identifier cannot be reserved word"
         else pure x
 
