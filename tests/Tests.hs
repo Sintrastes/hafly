@@ -33,7 +33,7 @@ main = defaultMain $ testGroup "Hafly Test Suite"
         expected @=? result
     , testCase "Parse string literal with complex quote" $ do
         let string = "\"Test ${x + x}\""
-        let result = parseExpression (operatorDefs base) string
+        let result = parseExpression (traverseOps $ operatorDefs base) string
 
         let expected = Right $ String [StringSeq "Test ", QuotedExpr $ Var "+" `App` Var "x" `App` Var "x"]
 
