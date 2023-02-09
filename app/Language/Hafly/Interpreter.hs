@@ -246,14 +246,17 @@ interpretSequence ctx@InterpreterContext {..} = \case
     SequenceAst [] -> Left "Cannot interpret an empty sequence"
     SequenceAst ~(x:xs) -> do
         SomeDynamicMonad m <- tryInferMonad ctx x
-        toDyn <$> interpretMonadicSequence ctx m [] (x:xs)
+        toDyn <$> assertMonadUnit <$> interpretMonadicSequence ctx m [] (x:xs)
+
+assertMonadUnit :: Monad m => m Dynamic -> m ()
+assertMonadUnit mx = (\x -> fromDyn @() x (error "Monadic sequence needs to return unit type")) <$> mx
 
 tryInferMonad :: InterpreterContext -> SequenceExpr -> Either TypeError SomeDynamicMonad
 tryInferMonad ctx@InterpreterContext {..} = \case
   Expr ast -> do
       res <- interpret ctx ast
-      defs <- sequence <$> forM monadDefs (\def@(SomeDynamicMonad (mnd :: DynamicMonad m)) ->
-          case checkM @m res of
+      defs <- sequence <$> filter isJust <$> forM monadDefs (\def@(SomeDynamicMonad (mnd :: DynamicMonad m)) ->
+          case checkM @m (flattenDyn res) of
               Nothing -> pure Nothing
               Just dm -> pure $ Just def)
       case defs of
