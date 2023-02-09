@@ -117,11 +117,24 @@ expr opDefs = try (app opDefs)
 
 baseExpr :: [[Operator Parser Ast]] -> Parser Ast
 baseExpr opDefs = literal opDefs
+    <|> try (rangeExpr opDefs)
     <|> try (record opDefs)
     <|> try (listExpr opDefs)
     <|> try (lambdaExpr opDefs)
     <|> try (Var <$> identifier)
     <|> (Sequence <$> block opDefs)
+
+rangeExpr :: [[Operator Parser Ast]] -> Parser Ast
+rangeExpr opDefs = do
+    char '['
+    x <- intLit
+    string ".."
+    y <- intLit
+    char ']'
+    return $ Ast.App (Ast.App
+        (Const $ toDyn $
+            \(x :: Int) (y :: Int) -> [x..y])
+        x) y
 
 lambdaExpr :: [[Operator Parser Ast]] -> Parser Ast
 lambdaExpr opDefs = do
