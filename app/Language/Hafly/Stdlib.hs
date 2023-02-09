@@ -47,35 +47,35 @@ base = InterpreterContext {
         [
           [
             -- "dot" operator for universal function call syntax.
-            InfixL $ Const ("." , toDyn ((\x y -> flexibleDynApply y x)))
+            InfixL $ Const ("." , \_ -> toDyn ((\x y -> flexibleDynApply y x)))
           ],
           [
-            InfixL $ Const ("of", toDyn ((.) @Dynamic @Dynamic @Dynamic))
-          , InfixL $ Const ("then", toDyn ((>>>) @(->) @Dynamic @Dynamic @Dynamic))
-          , InfixL $ Const (":=", toDyn (writeIORef @Dynamic))
+            InfixL $ Const ("of", \_ -> toDyn ((.) @Dynamic @Dynamic @Dynamic))
+          , InfixL $ Const ("then", \_ -> toDyn ((>>>) @(->) @Dynamic @Dynamic @Dynamic))
+          , InfixL $ Const (":=", \_ -> toDyn (writeIORef @Dynamic))
           ],
           [
-            InfixR $ Const ("*"  , toDyn ((*) @Int))
-          , InfixR $ Const ("*"  , toDyn ((*) @Double))
-          , InfixR $ Const ("/"  , toDyn (div @Int))
-          , InfixR $ Const ("/"  , toDyn ((/) @Double))
-          , InfixR $ Const ("mod", toDyn (mod @Int))
-          , InfixR $ Const ("and", toDyn (&&))
-          , InfixR $ Const ("or" , toDyn (||))
+            InfixR $ Const ("*"  , \_ -> toDyn ((*) @Int))
+          , InfixR $ Const ("*"  , \_ -> toDyn ((*) @Double))
+          , InfixR $ Const ("/"  , \_ -> toDyn (div @Int))
+          , InfixR $ Const ("/"  , \_ -> toDyn ((/) @Double))
+          , InfixR $ Const ("mod", \_ -> toDyn (mod @Int))
+          , InfixR $ Const ("and", \_ -> toDyn (&&))
+          , InfixR $ Const ("or" , \_ -> toDyn (||))
           ],
           [
-            InfixR $ Const ("+", toDyn ((+) @Int))
-          , InfixR $ Const ("+", toDyn ((+) @Double))
-          , InfixR $ Const ("+", toDyn ((++) @Dynamic))
-          , InfixR $ Const ("-", toDyn ((-) @Int))
-          , InfixR $ Const ("-", toDyn ((-) @Double))
+            InfixR $ Const ("+", \_ -> toDyn ((+) @Int))
+          , InfixR $ Const ("+", \_ -> toDyn ((+) @Double))
+          , InfixR $ Const ("+", \_ -> toDyn ((++) @Dynamic))
+          , InfixR $ Const ("-", \_ -> toDyn ((-) @Int))
+          , InfixR $ Const ("-", \_ -> toDyn ((-) @Double))
           ],
           [
-            InfixR $ Const ("$", toDyn flexibleDynApply),
-            InfixN $ Const ("==", toDyn ((==) @Int)),
-            InfixN $ Const ("==", toDyn ((==) @Double)),
-            InfixN $ Const ("==", toDyn ((==) @String)),
-            InfixN $ Const ("==", toDyn ((==) @Bool))
+            InfixR $ Const ("$", \_ -> toDyn flexibleDynApply),
+            InfixN $ Const ("==", \_ -> toDyn ((==) @Int)),
+            InfixN $ Const ("==", \_ -> toDyn ((==) @Double)),
+            InfixN $ Const ("==", \_ -> toDyn ((==) @String)),
+            InfixN $ Const ("==", \_ -> toDyn ((==) @Bool))
           ]
         ]
   , monadDefs =

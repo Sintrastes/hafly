@@ -38,7 +38,7 @@ main = runInputT defaultSettings (repl Hafly.base)
 
     processReplInput :: InterpreterContext -> String -> InputT IO InterpreterContext
     processReplInput ctx input = do
-        case parseExprDef (operatorDefs ctx) (T.pack input) of
+        case parseExprDef (traverseOps $ operatorDefs ctx) (T.pack input) of
             Right (x, xDef) -> do
                 case flattenDyn <$> interpretRec ctx x xDef of
                     Left s -> do
@@ -46,7 +46,7 @@ main = runInputT defaultSettings (repl Hafly.base)
                         return ctx
                     Right dy -> return (addDef ctx x dy)
             Left err -> do
-                case parseExpression (operatorDefs ctx) (T.pack input) of
+                case parseExpression (traverseOps $ operatorDefs ctx) (T.pack input) of
                     Left err -> do
                         liftIO $ putStrLn $ errorBundlePretty err
                     Right exp -> do

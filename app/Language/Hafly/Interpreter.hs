@@ -36,7 +36,7 @@ import Data.Map (filterWithKey)
 
 data InterpreterContext = InterpreterContext {
     exprDefs     :: MultiMap String (MultiMap String Dynamic -> Dynamic),
-    operatorDefs :: [[Operator (Const (String, Dynamic)) Void]],
+    operatorDefs :: [[Operator (Const (String, MultiMap String Dynamic -> Dynamic)) Void]],
     monadDefs    :: [SomeDynamicMonad]
 }
 
@@ -97,6 +97,23 @@ traverseExprs exprs = mapWithKey (\k x ->
         toMap exprs) x
     ) exprs
 
+reduceOp :: MultiMap String Dynamic 
+    -> Operator (Const (String, MultiMap String Dynamic -> Dynamic)) Void 
+    -> Operator (Const (String, Dynamic)) Void
+reduceOp opMap = \case
+    InfixN x -> InfixN ((\(y, z) -> Const (y, z opMap)) $ getConst x)
+    InfixL x -> InfixL ((\(y, z) -> Const (y, z opMap)) $ getConst x)
+    InfixR x -> InfixR ((\(y, z) -> Const (y, z opMap)) $ getConst x)
+    Prefix x -> Prefix ((\(y, z) -> Const (y, z opMap)) $ getConst x)
+    Postfix x -> Postfix ((\(y, z) -> Const (y, z opMap)) $ getConst x)
+    TernR x   -> TernR ((\(y, z) -> Const (y, z opMap)) $ getConst x)
+
+traverseOps :: [[Operator (Const (String, MultiMap String Dynamic -> Dynamic)) Void]] -> [[Operator (Const (String, Dynamic)) Void]]
+traverseOps exprs = fmap (\x -> reduceOp (getOpMap exprs) <$> x) exprs
+
+getOpMap :: [[Operator (Const (String, MultiMap String Dynamic -> Dynamic)) Void]] -> MultiMap String Dynamic
+getOpMap xs = fromList $ (\(x, y) -> (x, y (getOpMap xs))) <$> extractSpecs <$> join xs
+
 -- Equivalent to >>
 dynSeq :: DynamicMonad m -> m Dynamic -> m Dynamic -> m Dynamic
 dynSeq m x y = dynBind m x (const y)
@@ -137,7 +154,7 @@ interpret ctx@InterpreterContext {..} = \case
     Var x  -> dispatched x $
         lookup x $ fromMap (
             toMap (traverseExprs exprDefs) <>
-            toMap (fromList (extractSpecs <$> join operatorDefs)))
+            toMap (traverseExprs $ fromList (extractSpecs <$> join operatorDefs)))
     Ast.Const x -> pure x
     Ast.App f' x' -> do
         f <- interpret ctx f'
