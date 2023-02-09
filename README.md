@@ -35,7 +35,8 @@ Given sufficent time (and/or interested contributors!) I'll probably add optiona
 # Features / Progress
 
  * [x] Naturally sandboxed and extensible.
- * [x] Multiple Dispatch (i.e. the dymically-typed version of multi-parameter type classes) 
+ * [x] Dynamic (single) dispatch.
+ * [ ] Multiple Dispatch (i.e. the dymically-typed version of multi-parameter type classes) 
  * [x] Higher-order functions
  * [x] Everything is an expression
  * [x] Recursion
@@ -83,6 +84,12 @@ h' = f then g
 
 > h' 1
 15
+```
+
+## Heterogenous Collections
+
+```haskell
+[1, 2, "hello", 4.2, [1, 2, "x", "y"]]
 ```
 
 ## Uniform Function Call Syntax
