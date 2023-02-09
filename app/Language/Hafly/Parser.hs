@@ -127,13 +127,13 @@ baseExpr opDefs = literal opDefs
 rangeExpr :: [[Operator Parser Ast]] -> Parser Ast
 rangeExpr opDefs = do
     char '['
-    x <- intLit
+    x <- try intLit <|> Var <$> identifier
     string ".."
-    y <- intLit
+    y <- try intLit <|> Var <$> identifier
     char ']'
     return $ Ast.App (Ast.App
         (Const $ toDyn $
-            \(x :: Int) (y :: Int) -> [x..y])
+            \(x :: Int) (y :: Int) -> toDyn <$> [x..y])
         x) y
 
 lambdaExpr :: [[Operator Parser Ast]] -> Parser Ast
